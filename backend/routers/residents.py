@@ -37,12 +37,16 @@ def get_resident(resident_id: str):
 @router.post("/", response_model=Resident)
 def create_resident(resident: ResidentCreate):
     data = {k: (v if v != "" else None) for k, v in resident.dict().items()}
+    # Convertir objetos date a string
+    for k, v in data.items():
+        if isinstance(v, date):
+            data[k] = v.isoformat()
     try:
         res = supabase.table("residents").insert(data).execute()
         return res.data[0]
     except Exception as e:
         print("[ERROR] Al agregar residente:", e)
-        traceback.print_exc()
+        import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{resident_id}", response_model=Resident)
