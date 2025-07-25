@@ -3,6 +3,7 @@ from typing import List, Optional
 from datetime import date
 from pydantic import BaseModel
 from supabase_client import supabase
+import traceback
 
 class ResidentBase(BaseModel):
     name: str
@@ -40,6 +41,8 @@ def create_resident(resident: ResidentCreate):
         res = supabase.table("residents").insert(data).execute()
         return res.data[0]
     except Exception as e:
+        print("[ERROR] Al agregar residente:", e)
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{resident_id}", response_model=Resident)
