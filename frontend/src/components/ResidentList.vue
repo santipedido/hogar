@@ -1,6 +1,7 @@
 <template>
   <div class="resident-list">
     <h2>Residentes</h2>
+    <button @click="openAdd" class="add-btn">Agregar residente</button>
     <div v-if="loading" class="loader">Cargando...</div>
     <div v-else-if="error" class="error">Error: {{ error }}</div>
     <div v-else>
@@ -19,21 +20,36 @@
             <p v-if="resident.emergency_contact_phone">
               <strong>Tel:</strong> {{ resident.emergency_contact_phone }}
             </p>
+            <div class="actions">
+              <button @click="openEdit(resident)">Editar</button>
+              <button @click="removeResident(resident.id)" class="secondary">Eliminar</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <ResidentForm
+      v-if="showForm"
+      :modelValue="selectedResident"
+      :isEdit="isEdit"
+      @submit="handleFormSubmit"
+      @cancel="closeForm"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import ResidentForm from './ResidentForm.vue'
 
 const residents = ref([])
 const loading = ref(true)
 const error = ref('')
+const showForm = ref(false)
+const isEdit = ref(false)
+const selectedResident = ref(null)
 
-onMounted(async () => {
+async function fetchResidents() {
   loading.value = true
   try {
     const res = await fetch(import.meta.env.VITE_API_URL + '/residents')
@@ -44,7 +60,65 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(fetchResidents)
+
+function openAdd() {
+  selectedResident.value = null
+  isEdit.value = false
+  showForm.value = true
+}
+
+function openEdit(resident) {
+  selectedResident.value = { ...resident }
+  isEdit.value = true
+  showForm.value = true
+}
+
+function closeForm() {
+  showForm.value = false
+  selectedResident.value = null
+}
+
+async function handleFormSubmit(data) {
+  try {
+    if (isEdit.value && selectedResident.value) {
+      // Editar
+      const res = await fetch(import.meta.env.VITE_API_URL + `/residents/${selectedResident.value.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!res.ok) throw new Error('No se pudo editar el residente')
+    } else {
+      // Crear
+      const res = await fetch(import.meta.env.VITE_API_URL + '/residents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!res.ok) throw new Error('No se pudo agregar el residente')
+    }
+    await fetchResidents()
+    closeForm()
+  } catch (e) {
+    alert(e.message)
+  }
+}
+
+async function removeResident(id) {
+  if (!confirm('¿Seguro que deseas eliminar este residente?')) return
+  try {
+    const res = await fetch(import.meta.env.VITE_API_URL + `/residents/${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('No se pudo eliminar el residente')
+    await fetchResidents()
+  } catch (e) {
+    alert(e.message)
+  }
+}
 </script>
 
 <style scoped>
@@ -111,5 +185,18 @@ onMounted(async () => {
   text-align: center;
   color: #888;
   margin-top: 2rem;
+}
+.add-btn {
+  margin-bottom: 1.5rem;
+}
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+button.secondary {
+  background: #eee;
+  color: #333;
 }
 </style> 
