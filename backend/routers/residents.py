@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from datetime import date
+from pydantic import BaseModel
 from supabase_client import supabase
 
-class ResidentBase:
+class ResidentBase(BaseModel):
     name: str
     status: str  # 'independent' o 'semidependent'
     photo_url: Optional[str]
@@ -34,12 +35,12 @@ def get_resident(resident_id: str):
 
 @router.post("/", response_model=Resident)
 def create_resident(resident: ResidentCreate):
-    res = supabase.table("residents").insert(resident.__dict__).execute()
+    res = supabase.table("residents").insert(resident.dict()).execute()
     return res.data[0]
 
 @router.put("/{resident_id}", response_model=Resident)
 def update_resident(resident_id: str, resident: ResidentCreate):
-    res = supabase.table("residents").update(resident.__dict__).eq("id", resident_id).execute()
+    res = supabase.table("residents").update(resident.dict()).eq("id", resident_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Residente no encontrado")
     return res.data[0]
