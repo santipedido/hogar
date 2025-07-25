@@ -7,7 +7,7 @@
     <div v-else>
       <div v-if="residents.length === 0" class="empty">No hay residentes registrados.</div>
       <div class="cards">
-        <div v-for="resident in residents" :key="resident.id" class="card">
+        <div v-for="resident in residents" :key="resident.id" class="card resident-card">
           <img v-if="resident.photo_url" :src="resident.photo_url" alt="Foto" class="photo" />
           <div class="info">
             <h3>{{ resident.name }}</h3>
@@ -22,7 +22,7 @@
             </p>
             <div class="actions">
               <button @click="openEdit(resident)">Editar</button>
-              <button @click="removeResident(resident.id)" class="secondary">Eliminar</button>
+              <button @click="removeResident(resident.id)" class="secondary danger">Eliminar</button>
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ async function removeResident(id) {
   object-fit: cover;
   border-radius: 50%;
   margin-bottom: 0.5rem;
-  border: 2px solid #4a90e2;
+  border: 2px solid var(--color-primary);
 }
 .info {
   text-align: center;
@@ -198,5 +198,17 @@ async function removeResident(id) {
 button.secondary {
   background: #eee;
   color: #333;
+}
+button.secondary.danger {
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+}
+button.secondary.danger:hover {
+  background: #c0392b;
+  color: #fff;
+}
+.resident-card {
+  transition: box-shadow 0.2s, transform 0.2s;
 }
 </style> 
