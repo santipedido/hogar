@@ -131,30 +131,14 @@ async function removeResident(id) {
 </script>
 
 <style scoped>
-.resident-list {
-  max-width: 900px;
-  margin: 2rem auto;
-  background: #f8f5f0;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px #0001;
+.add-btn {
+  margin-bottom: 1.5rem;
 }
-.cards {
+.actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 0.5rem;
   justify-content: center;
-}
-.card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px #0002;
-  padding: 1rem 1.5rem;
-  min-width: 220px;
-  max-width: 260px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin-top: 1rem;
 }
 .photo {
   width: 80px;
@@ -166,58 +150,5 @@ async function removeResident(id) {
 }
 .info {
   text-align: center;
-}
-.status {
-  display: inline-block;
-  margin: 0.5rem 0;
-  padding: 0.2rem 0.8rem;
-  border-radius: 8px;
-  font-size: 0.95em;
-  color: #fff;
-}
-.status.independent {
-  background: #7ed957;
-}
-.status.semidependent {
-  background: #4a90e2;
-}
-.loader {
-  text-align: center;
-  color: #4a90e2;
-  font-weight: bold;
-}
-.error {
-  color: #c00;
-  text-align: center;
-}
-.empty {
-  text-align: center;
-  color: #888;
-  margin-top: 2rem;
-}
-.add-btn {
-  margin-bottom: 1.5rem;
-}
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-top: 1rem;
-}
-button.secondary {
-  background: #eee;
-  color: #333;
-}
-button.secondary.danger {
-  background: var(--color-danger);
-  color: #fff;
-  border: none;
-}
-button.secondary.danger:hover {
-  background: #c0392b;
-  color: #fff;
-}
-.resident-card {
-  transition: box-shadow 0.2s, transform 0.2s;
 }
 </style> 
