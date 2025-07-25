@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from datetime import date
-from services.supabase_client import supabase
+from supabase_client import supabase
 
 class ResidentBase:
     name: str
