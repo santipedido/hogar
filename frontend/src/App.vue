@@ -1,15 +1,9 @@
 <script setup>
-import PingPong from './components/PingPong.vue'
+import ResidentList from './components/ResidentList.vue'
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-  </header>
-
-  <main>
-    <PingPong />
-  </main>
+  <ResidentList />
 </template>
 
 <style scoped>
