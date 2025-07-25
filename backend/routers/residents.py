@@ -35,8 +35,12 @@ def get_resident(resident_id: str):
 
 @router.post("/", response_model=Resident)
 def create_resident(resident: ResidentCreate):
-    res = supabase.table("residents").insert(resident.dict()).execute()
-    return res.data[0]
+    data = {k: (v if v != "" else None) for k, v in resident.dict().items()}
+    try:
+        res = supabase.table("residents").insert(data).execute()
+        return res.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{resident_id}", response_model=Resident)
 def update_resident(resident_id: str, resident: ResidentCreate):
