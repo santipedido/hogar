@@ -51,7 +51,12 @@ def create_resident(resident: ResidentCreate):
 
 @router.put("/{resident_id}", response_model=Resident)
 def update_resident(resident_id: str, resident: ResidentCreate):
-    res = supabase.table("residents").update(resident.dict()).eq("id", resident_id).execute()
+    data = {k: (v if v != "" else None) for k, v in resident.dict().items()}
+    # Convertir objetos date a string
+    for k, v in data.items():
+        if isinstance(v, date):
+            data[k] = v.isoformat()
+    res = supabase.table("residents").update(data).eq("id", resident_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Residente no encontrado")
     return res.data[0]
