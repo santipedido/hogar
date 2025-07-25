@@ -2,6 +2,15 @@
   <div class="resident-list">
     <h2>Residentes</h2>
     <button @click="openAdd" class="add-btn">Agregar residente</button>
+
+    <ResidentForm
+      v-if="showForm"
+      :modelValue="selectedResident"
+      :isEdit="isEdit"
+      @submit="handleFormSubmit"
+      @cancel="closeForm"
+    />
+
     <div v-if="loading" class="loader">Cargando...</div>
     <div v-else-if="error" class="error">Error: {{ error }}</div>
     <div v-else>
@@ -28,13 +37,6 @@
         </div>
       </div>
     </div>
-    <ResidentForm
-      v-if="showForm"
-      :modelValue="selectedResident"
-      :isEdit="isEdit"
-      @submit="handleFormSubmit"
-      @cancel="closeForm"
-    />
   </div>
 </template>
 
