@@ -81,14 +81,23 @@ function closeForm() {
   selectedResident.value = null
 }
 
+function cleanResidentData(data) {
+  const cleaned = { ...data }
+  Object.keys(cleaned).forEach(key => {
+    if (cleaned[key] === '') cleaned[key] = null
+  })
+  return cleaned
+}
+
 async function handleFormSubmit(data) {
   try {
+    const cleanedData = cleanResidentData(data)
     if (isEdit.value && selectedResident.value) {
       // Editar
       const res = await fetch(import.meta.env.VITE_API_URL + `/residents/${selectedResident.value.id}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(cleanedData)
       })
       if (!res.ok) throw new Error('No se pudo editar el residente')
     } else {
@@ -96,7 +105,7 @@ async function handleFormSubmit(data) {
       const res = await fetch(import.meta.env.VITE_API_URL + '/residents/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(cleanedData)
       })
       if (!res.ok) throw new Error('No se pudo agregar el residente')
     }
