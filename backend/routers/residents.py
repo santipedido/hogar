@@ -1,7 +1,22 @@
 from fastapi import APIRouter, HTTPException
-from models.resident import Resident, ResidentCreate
+from typing import List, Optional
+from datetime import date
 from services.supabase_client import supabase
-from typing import List
+
+class ResidentBase:
+    name: str
+    status: str  # 'independent' o 'semidependent'
+    photo_url: Optional[str]
+    emergency_contact_name: Optional[str]
+    emergency_contact_phone: Optional[str]
+    admission_date: date
+    discharge_date: Optional[date]
+
+class ResidentCreate(ResidentBase):
+    pass
+
+class Resident(ResidentBase):
+    id: str
 
 router = APIRouter(prefix="/residents", tags=["residents"])
 
@@ -19,12 +34,12 @@ def get_resident(resident_id: str):
 
 @router.post("/", response_model=Resident)
 def create_resident(resident: ResidentCreate):
-    res = supabase.table("residents").insert(resident.dict()).execute()
+    res = supabase.table("residents").insert(resident.__dict__).execute()
     return res.data[0]
 
 @router.put("/{resident_id}", response_model=Resident)
 def update_resident(resident_id: str, resident: ResidentCreate):
-    res = supabase.table("residents").update(resident.dict()).eq("id", resident_id).execute()
+    res = supabase.table("residents").update(resident.__dict__).eq("id", resident_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Residente no encontrado")
     return res.data[0]
