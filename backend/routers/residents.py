@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from models.resident import Resident, ResidentCreate
-from services.supabase_client import supabase
+from backend.models.resident import Resident, ResidentCreate
+from backend.services.supabase_client import supabase
 from typing import List
 
 router = APIRouter(prefix="/residents", tags=["residents"])
