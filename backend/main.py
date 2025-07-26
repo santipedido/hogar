@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import residents, upload
+from routers import residents, upload, family_contacts
 
 app = FastAPI()
 
@@ -14,9 +14,10 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Incluir routers con el prefijo /api
-app.include_router(residents.router, prefix="/api")
-app.include_router(upload.router, prefix="/api")
+# Incluir routers
+app.include_router(residents.router)
+app.include_router(upload.router)
+app.include_router(family_contacts.router)
 
 @app.get("/ping")
 def ping():
