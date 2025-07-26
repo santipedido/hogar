@@ -142,7 +142,7 @@ async function fetchResidents() {
   }
 
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/residents/')
+    const res = await fetch(import.meta.env.VITE_API_URL + '/api/residents/')
     if (!res.ok) throw new Error('No se pudo cargar la lista')
     residents.value = await res.json()
     initialLoad.value = false
@@ -190,7 +190,7 @@ async function handleFormSubmit(data) {
     const cleanedData = cleanResidentData(data)
     if (isEdit.value && selectedResident.value) {
       // Editar
-      const res = await fetch(import.meta.env.VITE_API_URL + `/residents/${selectedResident.value.id}/`, {
+      const res = await fetch(import.meta.env.VITE_API_URL + `/api/residents/${selectedResident.value.id}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cleanedData)
@@ -198,7 +198,7 @@ async function handleFormSubmit(data) {
       if (!res.ok) throw new Error('No se pudo editar el residente')
     } else {
       // Crear
-      const res = await fetch(import.meta.env.VITE_API_URL + '/residents/', {
+      const res = await fetch(import.meta.env.VITE_API_URL + '/api/residents/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cleanedData)
@@ -215,7 +215,7 @@ async function handleFormSubmit(data) {
 async function removeResident(id) {
   if (!confirm('¿Seguro que deseas eliminar este residente?')) return
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + `/residents/${id}/`, {
+    const res = await fetch(import.meta.env.VITE_API_URL + `/api/residents/${id}/`, {
       method: 'DELETE'
     })
     if (!res.ok) throw new Error('No se pudo eliminar el residente')
