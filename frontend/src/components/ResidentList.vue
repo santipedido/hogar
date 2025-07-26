@@ -50,7 +50,7 @@
           <div class="info">
             <h3>{{ resident.name }}</h3>
             
-            <span :class="['status', resident.status]">
+            <span :class="['status', resident.status === 'independent' ? 'independent' : 'semi-dependent']">
               {{ resident.status === 'independent' ? 'Independiente' : 'Semidependiente' }}
             </span>
 
@@ -372,7 +372,7 @@ function formatDate(dateString) {
   font-size: 0.875rem;
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
-  background: var(--color-background-mute);
+  font-weight: 500;
 }
 
 .status.independent {
