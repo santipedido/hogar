@@ -4,10 +4,5 @@ python-multipart==0.0.5
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-dotenv==0.19.0
-postgrest==0.10.6
-httpx>=0.23.0,<0.24.0
-storage3==0.5.2
-gotrue==0.5.0
-realtime==0.0.5
-supabase-py==0.0.2
+supabase>=1.0.3
 Pillow>=9.0.0,<10.0.0

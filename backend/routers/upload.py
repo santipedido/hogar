@@ -72,7 +72,12 @@ async def upload_file(file: UploadFile = File(...)):
             buckets = supabase_client.storage.list_buckets()
             logger.info(f"Buckets disponibles: {buckets}")
             
-            bucket_exists = any(bucket.get('name') == BUCKET_NAME for bucket in buckets)
+            bucket_exists = False
+            for bucket in buckets:
+                if bucket.name == BUCKET_NAME:
+                    bucket_exists = True
+                    break
+
             if not bucket_exists:
                 logger.error(f"El bucket {BUCKET_NAME} no existe")
                 raise HTTPException(
@@ -81,24 +86,18 @@ async def upload_file(file: UploadFile = File(...)):
                 )
 
             # Subir a Supabase Storage
+            logger.info("Iniciando subida a Supabase Storage...")
             response = supabase_client.storage.from_(BUCKET_NAME).upload(
-                new_filename,
-                contents,
+                path=new_filename,
+                file=contents,
                 file_options={"content-type": file.content_type}
             )
             
-            logger.info(f"Respuesta de subida: {response}")
-
-            if hasattr(response, 'error') and response.error:
-                logger.error(f"Error de Supabase: {response.error}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Error al subir el archivo: {response.error}"
-                )
+            logger.info(f"Archivo subido exitosamente: {response}")
 
             # Obtener URL pública
             file_url = supabase_client.storage.from_(BUCKET_NAME).get_public_url(new_filename)
-            logger.info(f"URL generada: {file_url}")
+            logger.info(f"URL pública generada: {file_url}")
 
             return {"url": file_url}
 
