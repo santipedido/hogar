@@ -7,17 +7,20 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://hogarged.netlify.app"
+        "https://hogarged.netlify.app",
+        "http://186.119.90.87",
+        "http://localhost:5173",
+        "http://localhost:3000"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"]
 )
 
-# Incluir routers
-app.include_router(residents.router)
-app.include_router(upload.router)
-app.include_router(family_contacts.router)
+# Incluir routers con prefijo /api
+app.include_router(residents.router, prefix="/api")
+app.include_router(upload.router, prefix="/api")
+app.include_router(family_contacts.router, prefix="/api")
 
 @app.get("/ping")
 def ping():
