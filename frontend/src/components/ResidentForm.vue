@@ -179,16 +179,57 @@ async function uploadPhoto() {
   }
 }
 
-async function handleSubmit() {
+function cleanResidentData(data) {
+  const cleaned = { ...data }
+  
+  // Convertir fechas a formato ISO string
+  if (cleaned.admission_date) {
+    cleaned.admission_date = new Date(cleaned.admission_date).toISOString().split('T')[0]
+  }
+  if (cleaned.discharge_date) {
+    cleaned.discharge_date = new Date(cleaned.discharge_date).toISOString().split('T')[0]
+  }
+
+  // Limpiar campos vacíos
+  Object.keys(cleaned).forEach(key => {
+    if (cleaned[key] === '') cleaned[key] = null
+  })
+
+  return cleaned
+}
+
+async function handleFormSubmit(data) {
   try {
+    // Primero subir la foto si hay una nueva
     if (photoFile.value) {
       const photoUrl = await uploadPhoto()
-      formData.value.photo_url = photoUrl
+      data.photo_url = photoUrl
     }
-    
-    emit('submit', { ...formData.value })
-  } catch (error) {
-    alert(error.message)
+
+    // Limpiar y preparar los datos
+    const cleanedData = cleanResidentData(data)
+
+    if (isEdit.value && selectedResident.value) {
+      // Editar
+      const res = await fetch(import.meta.env.VITE_API_URL + `/api/residents/${selectedResident.value.id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cleanedData)
+      })
+      if (!res.ok) throw new Error('No se pudo editar el residente')
+    } else {
+      // Crear
+      const res = await fetch(import.meta.env.VITE_API_URL + '/api/residents/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cleanedData)
+      })
+      if (!res.ok) throw new Error('No se pudo agregar el residente')
+    }
+    await fetchResidents()
+    closeForm()
+  } catch (e) {
+    alert(e.message)
   }
 }
 </script>
