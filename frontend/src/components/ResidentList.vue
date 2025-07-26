@@ -13,7 +13,13 @@
 
     <div v-if="loading" class="loader">
       <IconSpinner :size="50" />
-      <p>Cargando residentes...</p>
+      <p>{{ loadingMessage }}</p>
+      <div v-if="initialLoad && countdown > 0" class="progress-bar">
+        <div 
+          class="progress" 
+          :style="{ width: `${(countdown / 30) * 100}%` }"
+        ></div>
+      </div>
     </div>
     <div v-else-if="error" class="error">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -52,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ResidentForm from './ResidentForm.vue'
 import IconSpinner from './icons/IconSpinner.vue'
 
@@ -62,17 +68,57 @@ const error = ref('')
 const showForm = ref(false)
 const isEdit = ref(false)
 const selectedResident = ref(null)
+const initialLoad = ref(true)
+const countdown = ref(30) // 30 segundos de tiempo máximo estimado
+const countdownInterval = ref(null)
+
+const loadingMessage = computed(() => {
+  if (!initialLoad.value) return 'Cargando residentes...'
+  return countdown.value > 0
+    ? `Iniciando el servidor... Esto puede tardar hasta ${countdown.value} segundos`
+    : 'El servidor está tardando más de lo esperado...'
+})
+
+function startCountdown() {
+  countdown.value = 30
+  countdownInterval.value = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--
+    } else {
+      clearInterval(countdownInterval.value)
+    }
+  }, 1000)
+}
+
+function stopCountdown() {
+  if (countdownInterval.value) {
+    clearInterval(countdownInterval.value)
+    countdownInterval.value = null
+  }
+}
 
 async function fetchResidents() {
   loading.value = true
+  error.value = ''
+  
+  if (initialLoad.value) {
+    startCountdown()
+  }
+
   try {
     const res = await fetch(import.meta.env.VITE_API_URL + '/residents/')
     if (!res.ok) throw new Error('No se pudo cargar la lista')
     residents.value = await res.json()
+    initialLoad.value = false
   } catch (e) {
-    error.value = e.message
+    if (e.message === 'Failed to fetch') {
+      error.value = 'No se pudo conectar con el servidor. Es posible que esté iniciando, por favor espera un momento.'
+    } else {
+      error.value = e.message
+    }
   } finally {
     loading.value = false
+    stopCountdown()
   }
 }
 
@@ -173,6 +219,7 @@ async function removeResident(id) {
   padding: 2rem;
   gap: 1rem;
   color: var(--color-text-light);
+  text-align: center;
 }
 
 .error {
@@ -202,5 +249,20 @@ async function removeResident(id) {
 .retry-btn:hover {
   background: var(--color-danger, #dc3545);
   color: white;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 4px;
+  background: var(--color-background-soft);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.progress {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 1s linear;
 }
 </style> 
