@@ -24,7 +24,7 @@ class FamilyContact(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
 
-router = APIRouter(prefix="/api")
+router = APIRouter()
 
 @router.get("/family-contacts/resident/{resident_id}", response_model=List[FamilyContact])
 async def get_resident_contacts(resident_id: str):
