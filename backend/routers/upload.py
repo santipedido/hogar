@@ -8,7 +8,11 @@ from datetime import datetime
 from supabase_client import supabase_client
 import logging
 
-router = APIRouter()
+# Configurar el router
+router = APIRouter(
+    prefix="/upload",
+    tags=["upload"]
+)
 
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
@@ -26,9 +30,11 @@ def is_valid_image(file_content: bytes) -> bool:
         logger.error(f"Error validando imagen: {str(e)}")
         return False
 
-@router.post("/upload/")
+@router.post("/")
 async def upload_file(file: UploadFile = File(...)):
     try:
+        logger.info("Iniciando proceso de subida de archivo")
+        
         # Verificar extensión
         file_ext = os.path.splitext(file.filename)[1].lower()
         if file_ext not in ALLOWED_EXTENSIONS:

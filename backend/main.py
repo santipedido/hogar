@@ -14,8 +14,9 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-app.include_router(residents.router)
-app.include_router(upload.router)
+# Incluir routers con el prefijo /api
+app.include_router(residents.router, prefix="/api")
+app.include_router(upload.router, prefix="/api")
 
 @app.get("/ping")
 def ping():
