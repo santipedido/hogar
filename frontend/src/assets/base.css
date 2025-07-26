@@ -102,7 +102,7 @@ h1, h2, h3 {
 }
 .status.semidependent {
   background: var(--color-primary);
-}
+  }
 
 .resident-list {
   width: 100%;

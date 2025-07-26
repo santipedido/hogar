@@ -1,0 +1,32 @@
+# Mensajes de commit sugeridos por endpoints
+
+# Residentes
+feat(residents): agregar endpoints CRUD para residentes
+fix(residents): corregir validación y respuesta de endpoints de residentes
+
+# Contactos familiares
+feat(family_contacts): agregar endpoints CRUD para contactos familiares de residentes
+
+# Medicación
+feat(medications): agregar endpoints CRUD para medicación
+fix(medications): corregir lógica de administración de medicamentos
+
+# Signos vitales
+feat(vital_signs): agregar endpoints CRUD para signos vitales
+fix(vital_signs): mejorar validación de datos de signos vitales
+
+# Actividades diarias
+feat(daily_activities): agregar endpoints CRUD para actividades diarias
+fix(daily_activities): corregir registro de actividades
+
+# Personal
+feat(staff): agregar endpoints CRUD para personal
+fix(staff): mejorar control de roles y permisos
+
+# Autenticación y seguridad
+feat(auth): integrar autenticación JWT de Supabase
+fix(auth): proteger endpoints sensibles con autenticación
+
+# Integración y pruebas
+test(api): agregar pruebas básicas para endpoints de residentes
+chore(api): refactorizar estructura de routers y servicios 

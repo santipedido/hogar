@@ -1,22 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import residents
+from routers import residents, upload
 
 app = FastAPI()
 
+# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://hogarged.netlify.app"
-    ],
+    allow_origins=["*"],  # En producción, especifica los orígenes permitidos
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"]
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-app.include_router(residents.router)
+# Incluir routers
+app.include_router(residents.router, prefix="/api", tags=["residents"])
+app.include_router(upload.router, prefix="/api", tags=["upload"])
 
-@app.get("/ping")
-def ping():
-    return {"message": "pong"} 
+@app.get("/")
+def read_root():
+    return {"Hello": "World"} 
