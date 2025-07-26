@@ -34,21 +34,56 @@
       <div v-if="residents.length === 0" class="empty">No hay residentes registrados.</div>
       <div class="cards">
         <div v-for="resident in residents" :key="resident.id" class="card resident-card">
-          <img v-if="resident.photo_url" :src="resident.photo_url" alt="Foto" class="photo" />
+          <div class="photo-container">
+            <img 
+              v-if="resident.photo_url" 
+              :src="resident.photo_url" 
+              :alt="'Foto de ' + resident.name" 
+              class="photo" 
+            />
+            <IconUserPlaceholder
+              v-else
+              class="photo-placeholder"
+            />
+          </div>
+
           <div class="info">
             <h3>{{ resident.name }}</h3>
+            
             <span :class="['status', resident.status]">
               {{ resident.status === 'independent' ? 'Independiente' : 'Semidependiente' }}
             </span>
-            <p v-if="resident.emergency_contact_name">
-              <strong>Contacto:</strong> {{ resident.emergency_contact_name }}
-            </p>
-            <p v-if="resident.emergency_contact_phone">
-              <strong>Tel:</strong> {{ resident.emergency_contact_phone }}
-            </p>
+
+            <div class="admission-date" v-if="resident.admission_date">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span>Ingreso: {{ formatDate(resident.admission_date) }}</span>
+            </div>
+
+            <div class="contact-info">
+              <div v-if="resident.emergency_contact_name" class="contact-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>{{ resident.emergency_contact_name }}</span>
+              </div>
+
+              <div v-if="resident.emergency_contact_phone" class="contact-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                <span>{{ resident.emergency_contact_phone }}</span>
+              </div>
+            </div>
+
             <div class="actions">
-              <button @click="openEdit(resident)">Editar</button>
-              <button @click="removeResident(resident.id)" class="secondary danger">Eliminar</button>
+              <button @click="openEdit(resident)" class="edit-btn">Editar</button>
+              <button @click="removeResident(resident.id)" class="delete-btn">Eliminar</button>
             </div>
           </div>
         </div>
@@ -61,6 +96,7 @@
 import { ref, onMounted, computed } from 'vue'
 import ResidentForm from './ResidentForm.vue'
 import IconSpinner from './icons/IconSpinner.vue'
+import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 
 const residents = ref([])
 const loading = ref(true)
@@ -188,6 +224,16 @@ async function removeResident(id) {
     alert(e.message)
   }
 }
+
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }).format(date)
+}
 </script>
 
 <style scoped>
@@ -264,5 +310,146 @@ async function removeResident(id) {
   height: 100%;
   background: var(--color-primary);
   transition: width 1s linear;
+}
+
+.resident-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background: var(--color-background-soft);
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  gap: 1rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.resident-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.photo-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  overflow: hidden;
+  background: var(--color-background-mute);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--color-primary);
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  color: var(--color-text-light);
+  opacity: 0.5;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.info h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-heading);
+}
+
+.status {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  background: var(--color-background-mute);
+}
+
+.status.independent {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.status.semi-dependent {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.admission-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.edit-btn, .delete-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  flex: 1;
+  max-width: 120px;
+}
+
+.edit-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.edit-btn:hover {
+  background: var(--color-primary-dark, #3b82f6);
+}
+
+.delete-btn {
+  background: transparent;
+  border: 1px solid var(--color-danger, #dc3545);
+  color: var(--color-danger, #dc3545);
+}
+
+.delete-btn:hover {
+  background: var(--color-danger, #dc3545);
+  color: white;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
 }
 </style> 
