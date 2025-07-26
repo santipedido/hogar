@@ -12,11 +12,11 @@ load_dotenv()
 
 # Obtener credenciales
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Usar service role key para tener permisos de admin
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     logger.error("Faltan credenciales de Supabase")
-    raise ValueError("SUPABASE_URL y SUPABASE_KEY son requeridas")
+    raise ValueError("SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY son requeridas")
 
 try:
     logger.info(f"Inicializando cliente de Supabase con URL: {SUPABASE_URL}")
@@ -26,7 +26,7 @@ try:
     try:
         logger.info("Verificando conexión a Supabase Storage...")
         buckets = supabase_client.storage.list_buckets()
-        logger.info(f"Conexión exitosa. Buckets disponibles: {buckets}")
+        logger.info(f"Conexión exitosa. Buckets disponibles: {[bucket.name for bucket in buckets]}")
     except Exception as e:
         logger.warning(f"No se pudieron listar los buckets: {str(e)}")
         logger.warning("Esto podría indicar un problema con los permisos o la configuración de Storage")

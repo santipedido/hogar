@@ -79,11 +79,16 @@ async def upload_file(file: UploadFile = File(...)):
                     break
 
             if not bucket_exists:
-                logger.error(f"El bucket {BUCKET_NAME} no existe")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"El bucket {BUCKET_NAME} no está configurado"
-                )
+                logger.info(f"El bucket {BUCKET_NAME} no existe, intentando crearlo...")
+                try:
+                    supabase_client.storage.create_bucket(BUCKET_NAME, {'public': True})
+                    logger.info(f"Bucket {BUCKET_NAME} creado exitosamente")
+                except Exception as e:
+                    logger.error(f"No se pudo crear el bucket: {str(e)}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="No se pudo crear el bucket de almacenamiento. Por favor, contacta al administrador."
+                    )
 
             # Subir a Supabase Storage
             logger.info("Iniciando subida a Supabase Storage...")
