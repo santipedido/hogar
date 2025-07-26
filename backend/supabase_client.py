@@ -1,5 +1,5 @@
 import os
-from supabase import create_client, Client
+from supabase import create_client
 from dotenv import load_dotenv
 import logging
 
@@ -20,7 +20,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 try:
     logger.info("Inicializando cliente de Supabase...")
-    supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
     logger.info("Cliente de Supabase inicializado correctamente")
 except Exception as e:
     logger.error(f"Error al inicializar cliente de Supabase: {str(e)}")
