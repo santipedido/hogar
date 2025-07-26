@@ -6,73 +6,108 @@ import io
 import uuid
 from datetime import datetime
 from supabase_client import supabase_client
+import logging
 
 router = APIRouter()
 
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+BUCKET_NAME = 'residents'
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def is_valid_image(file_content: bytes) -> bool:
     try:
         img = Image.open(io.BytesIO(file_content))
         img.verify()
         return True
-    except:
+    except Exception as e:
+        logger.error(f"Error validando imagen: {str(e)}")
         return False
 
 @router.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
-    # Verificar extensión
-    file_ext = os.path.splitext(file.filename)[1].lower()
-    if file_ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail="Formato de archivo no permitido. Use: .jpg, .jpeg, .png o .gif"
-        )
-
-    # Leer el archivo
-    contents = await file.read()
-    
-    # Verificar tamaño
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail="El archivo es demasiado grande. Máximo 5MB."
-        )
-
-    # Verificar que sea una imagen válida
-    if not is_valid_image(contents):
-        raise HTTPException(
-            status_code=400,
-            detail="El archivo no es una imagen válida"
-        )
-
     try:
+        # Verificar extensión
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        if file_ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail="Formato de archivo no permitido. Use: .jpg, .jpeg, .png o .gif"
+            )
+
+        # Leer el archivo
+        contents = await file.read()
+        
+        # Verificar tamaño
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail="El archivo es demasiado grande. Máximo 5MB."
+            )
+
+        # Verificar que sea una imagen válida
+        if not is_valid_image(contents):
+            raise HTTPException(
+                status_code=400,
+                detail="El archivo no es una imagen válida"
+            )
+
         # Generar nombre único para el archivo
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         random_uuid = str(uuid.uuid4())[:8]
         new_filename = f"resident_photo_{timestamp}_{random_uuid}{file_ext}"
 
-        # Subir a Supabase Storage
-        response = supabase_client.storage.from_('residents').upload(
-            new_filename,
-            contents,
-            file_options={"content-type": file.content_type}
-        )
+        logger.info(f"Intentando subir archivo: {new_filename}")
 
-        if response.error:
+        try:
+            # Verificar si el bucket existe
+            buckets = supabase_client.storage.list_buckets()
+            logger.info(f"Buckets disponibles: {buckets}")
+            
+            bucket_exists = any(bucket.get('name') == BUCKET_NAME for bucket in buckets)
+            if not bucket_exists:
+                logger.error(f"El bucket {BUCKET_NAME} no existe")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"El bucket {BUCKET_NAME} no está configurado"
+                )
+
+            # Subir a Supabase Storage
+            response = supabase_client.storage.from_(BUCKET_NAME).upload(
+                new_filename,
+                contents,
+                file_options={"content-type": file.content_type}
+            )
+            
+            logger.info(f"Respuesta de subida: {response}")
+
+            if hasattr(response, 'error') and response.error:
+                logger.error(f"Error de Supabase: {response.error}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error al subir el archivo: {response.error}"
+                )
+
+            # Obtener URL pública
+            file_url = supabase_client.storage.from_(BUCKET_NAME).get_public_url(new_filename)
+            logger.info(f"URL generada: {file_url}")
+
+            return {"url": file_url}
+
+        except Exception as e:
+            logger.error(f"Error en operación de Supabase: {str(e)}")
             raise HTTPException(
                 status_code=500,
-                detail="Error al subir el archivo"
+                detail=f"Error al procesar el archivo en Supabase: {str(e)}"
             )
 
-        # Obtener URL pública
-        file_url = supabase_client.storage.from_('residents').get_public_url(new_filename)
-
-        return {"url": file_url}
-
+    except HTTPException as he:
+        raise he
     except Exception as e:
+        logger.error(f"Error general: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error al procesar el archivo: {str(e)}"
+            detail=f"Error inesperado: {str(e)}"
         ) 
