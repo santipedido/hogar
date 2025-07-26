@@ -164,7 +164,7 @@ async function uploadPhoto() {
   formData.append('file', photoFile.value)
 
   try {
-    const response = await fetch(import.meta.env.VITE_API_URL + '/upload/', {
+    const response = await fetch(import.meta.env.VITE_API_URL + '/api/upload/', {
       method: 'POST',
       body: formData
     })
