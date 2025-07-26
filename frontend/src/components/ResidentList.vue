@@ -11,8 +11,19 @@
       @cancel="closeForm"
     />
 
-    <div v-if="loading" class="loader">Cargando...</div>
-    <div v-else-if="error" class="error">Error: {{ error }}</div>
+    <div v-if="loading" class="loader">
+      <IconSpinner :size="50" />
+      <p>Cargando residentes...</p>
+    </div>
+    <div v-else-if="error" class="error">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p>{{ error }}</p>
+      <button @click="fetchResidents" class="retry-btn">Reintentar</button>
+    </div>
     <div v-else>
       <div v-if="residents.length === 0" class="empty">No hay residentes registrados.</div>
       <div class="cards">
@@ -43,6 +54,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ResidentForm from './ResidentForm.vue'
+import IconSpinner from './icons/IconSpinner.vue'
 
 const residents = ref([])
 const loading = ref(true)
@@ -152,5 +164,43 @@ async function removeResident(id) {
 }
 .info {
   text-align: center;
+}
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: var(--color-text-light);
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: var(--color-danger, #dc3545);
+  text-align: center;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.retry-btn {
+  background: transparent;
+  border: 1px solid var(--color-danger, #dc3545);
+  color: var(--color-danger, #dc3545);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: var(--color-danger, #dc3545);
+  color: white;
 }
 </style> 
