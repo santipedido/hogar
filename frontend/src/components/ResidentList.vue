@@ -321,15 +321,19 @@ const emit = defineEmits(['select-resident'])
   padding: 1.5rem;
   background: var(--color-background-soft);
   border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
   gap: 1rem;
   width: 100%;
   max-width: 320px;
+  cursor: pointer;
+  border: 2px solid transparent;
 }
 
 .resident-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-primary);
+  background: var(--color-background-mute);
 }
 
 .photo-container {
@@ -426,6 +430,8 @@ const emit = defineEmits(['select-resident'])
   margin-top: 1rem;
   width: 100%;
   justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .edit-btn, .delete-btn {
