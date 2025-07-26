@@ -1,5 +1,5 @@
 import os
-from supabase import create_client
+from supabase import Client, create_client
 from dotenv import load_dotenv
 import logging
 
@@ -20,7 +20,14 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 try:
     logger.info("Inicializando cliente de Supabase...")
-    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # Verificar la conexión intentando listar los buckets
+    try:
+        buckets = supabase_client.storage.list_buckets()
+        logger.info(f"Conexión exitosa. Buckets disponibles: {buckets}")
+    except Exception as e:
+        logger.warning(f"No se pudieron listar los buckets: {str(e)}")
+    
     logger.info("Cliente de Supabase inicializado correctamente")
 except Exception as e:
     logger.error(f"Error al inicializar cliente de Supabase: {str(e)}")
