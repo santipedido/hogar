@@ -359,6 +359,7 @@ function formatDate(dateString) {
   align-items: center;
   gap: 0.75rem;
   width: 100%;
+  padding: 0 1rem;
 }
 
 .info h3 {
@@ -395,17 +396,26 @@ function formatDate(dateString) {
 .contact-info {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   width: 100%;
-  margin-top: 0.5rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: var(--color-background-mute);
+  border-radius: 8px;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   font-size: 0.875rem;
   color: var(--color-text);
+  padding: 0.25rem;
+}
+
+.contact-item span {
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .actions {
