@@ -49,8 +49,7 @@
         <select 
           id="status" 
           v-model="formData.status" 
-          required 
-          class="form-control"
+          required
         >
           <option value="independent">Independiente</option>
           <option value="semidependent">Semidependiente</option>
@@ -62,8 +61,8 @@
         <input 
           id="emergencyContactName" 
           v-model="formData.emergency_contact_name" 
-          type="text" 
-          placeholder="Nombre del contacto de emergencia"
+          type="text"
+          placeholder="Nombre del contacto"
         >
       </div>
 
@@ -72,8 +71,8 @@
         <input 
           id="emergencyContactPhone" 
           v-model="formData.emergency_contact_phone" 
-          type="tel" 
-          placeholder="Teléfono del contacto de emergencia"
+          type="tel"
+          placeholder="Número de teléfono"
         >
       </div>
 
@@ -83,8 +82,7 @@
           id="admissionDate" 
           v-model="formData.admission_date" 
           type="date" 
-          required 
-          class="form-control"
+          required
         >
       </div>
 
@@ -93,16 +91,14 @@
         <input 
           id="dischargeDate" 
           v-model="formData.discharge_date" 
-          type="date" 
-          class="form-control"
+          type="date"
         >
       </div>
 
       <div class="actions">
         <button type="submit">{{ isEdit ? 'Guardar cambios' : 'Agregar' }}</button>
-        <button type="button" @click="$emit('cancel')" class="secondary">Cancelar</button>
+        <button type="button" class="secondary" @click="closeForm">Cancelar</button>
       </div>
-      <div v-if="error" class="error">{{ error }}</div>
     </form>
   </div>
 </template>
@@ -127,10 +123,11 @@ const emit = defineEmits(['update:modelValue', 'submit', 'cancel'])
 const formData = ref({
   name: '',
   status: 'independent',
-  admission_date: '',
+  photo_url: '',
   emergency_contact_name: '',
   emergency_contact_phone: '',
-  photo_url: '',
+  admission_date: '',
+  discharge_date: '',
   ...props.modelValue
 })
 
@@ -198,39 +195,26 @@ function cleanResidentData(data) {
   return cleaned
 }
 
-async function handleFormSubmit(data) {
+async function handleSubmit() {
   try {
     // Primero subir la foto si hay una nueva
     if (photoFile.value) {
       const photoUrl = await uploadPhoto()
-      data.photo_url = photoUrl
+      formData.value.photo_url = photoUrl
     }
 
     // Limpiar y preparar los datos
-    const cleanedData = cleanResidentData(data)
+    const cleanedData = cleanResidentData(formData.value)
 
-    if (isEdit.value && selectedResident.value) {
-      // Editar
-      const res = await fetch(import.meta.env.VITE_API_URL + `/api/residents/${selectedResident.value.id}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cleanedData)
-      })
-      if (!res.ok) throw new Error('No se pudo editar el residente')
-    } else {
-      // Crear
-      const res = await fetch(import.meta.env.VITE_API_URL + '/api/residents/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cleanedData)
-      })
-      if (!res.ok) throw new Error('No se pudo agregar el residente')
-    }
-    await fetchResidents()
-    closeForm()
+    // Emitir los datos limpios
+    emit('submit', cleanedData)
   } catch (e) {
     alert(e.message)
   }
+}
+
+function closeForm() {
+  emit('cancel')
 }
 </script>
 
@@ -334,7 +318,7 @@ async function handleFormSubmit(data) {
   font-weight: 500;
 }
 
-.form-control {
+input, select {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 1px solid var(--color-border);
@@ -345,7 +329,7 @@ async function handleFormSubmit(data) {
   transition: border-color 0.2s;
 }
 
-.form-control:focus {
+input:focus, select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
@@ -354,18 +338,35 @@ async function handleFormSubmit(data) {
 .actions {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 1rem;
+  margin-top: 2rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button[type="submit"] {
+  background: var(--color-primary);
+  color: white;
+}
+
+button[type="submit"]:hover {
+  background: var(--color-primary-dark, #3b82f6);
 }
 
 button.secondary {
-  background: #eee;
-  color: #333;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
 }
 
-.error {
-  color: #c00;
-  margin-top: 1rem;
-  text-align: center;
+button.secondary:hover {
+  background: var(--color-background-mute);
 }
 </style> 
