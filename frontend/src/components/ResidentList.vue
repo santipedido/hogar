@@ -461,5 +461,49 @@ function formatDate(dateString) {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   padding: 1rem 0;
+  justify-items: center;
+}
+
+@media (max-width: 640px) {
+  .cards {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .resident-card {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .info {
+    padding: 0 0.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .edit-btn, .delete-btn {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    padding: 1rem;
+  }
+
+  .resident-card {
+    width: 100%;
+  }
+}
+
+.resident-list {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 </style> 
