@@ -2,7 +2,18 @@
   <div class="medication-list">
     <div class="header">
       <h3>Medicación</h3>
-      <button @click="openAdd" class="add-btn">Agregar medicación</button>
+      <div class="header-actions">
+        <button @click="showCalendar = !showCalendar" class="calendar-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          {{ showCalendar ? 'Lista' : 'Calendario' }}
+        </button>
+        <button @click="openAdd" class="add-btn">Agregar medicación</button>
+      </div>
     </div>
 
     <MedicationForm
@@ -14,66 +25,74 @@
       @cancel="closeForm"
     />
 
-    <div v-if="loading" class="loader">
-      <IconSpinner :size="50" />
-      <p>Cargando medicación...</p>
+    <!-- Vista de Calendario -->
+    <div v-if="showCalendar">
+      <MedicationCalendar :residentId="residentId" />
     </div>
-    <div v-else-if="error" class="error">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-      </svg>
-      <p>{{ error }}</p>
-      <button @click="fetchMedications" class="retry-btn">Reintentar</button>
-    </div>
+
+    <!-- Vista de Lista -->
     <div v-else>
-      <div v-if="medications.length === 0" class="empty">
-        No hay medicación registrada.
+      <div v-if="loading" class="loader">
+        <IconSpinner :size="50" />
+        <p>Cargando medicación...</p>
       </div>
-      <div v-else class="medications">
-        <div v-for="medication in medications" :key="medication.id" class="medication-card" :class="{ 'administered': medication.administered_at }">
-          <div class="medication-info">
-            <div class="name-badge">
-              <h4>{{ medication.med_name }}</h4>
-              <span v-if="medication.administered_at" class="administered-badge">Administrada</span>
+      <div v-else-if="error" class="error">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>{{ error }}</p>
+        <button @click="fetchMedications" class="retry-btn">Reintentar</button>
+      </div>
+      <div v-else>
+        <div v-if="medications.length === 0" class="empty">
+          No hay medicación registrada.
+        </div>
+        <div v-else class="medications">
+          <div v-for="medication in medications" :key="medication.id" class="medication-card" :class="{ 'administered': medication.administered_at }">
+            <div class="medication-info">
+              <div class="name-badge">
+                <h4>{{ medication.med_name }}</h4>
+                <span v-if="medication.administered_at" class="administered-badge">Administrada</span>
+              </div>
+              <p class="dosage">{{ medication.dosage }}</p>
+              <p class="frequency">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+                {{ medication.frequency }}
+              </p>
+              <p v-if="medication.scheduled_time" class="scheduled-time">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Hora: {{ formatTime(medication.scheduled_time) }}
+              </p>
+              <p v-if="medication.administered_at" class="administered-time">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                </svg>
+                Administrada: {{ formatDateTime(medication.administered_at) }}
+              </p>
+              <p v-if="medication.notes" class="notes">{{ medication.notes }}</p>
             </div>
-            <p class="dosage">{{ medication.dosage }}</p>
-            <p class="frequency">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12,6 12,12 16,14"></polyline>
-              </svg>
-              {{ medication.frequency }}
-            </p>
-            <p v-if="medication.scheduled_time" class="scheduled-time">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              Hora: {{ formatTime(medication.scheduled_time) }}
-            </p>
-            <p v-if="medication.administered_at" class="administered-time">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22,4 12,14.01 9,11.01"></polyline>
-              </svg>
-              Administrada: {{ formatDateTime(medication.administered_at) }}
-            </p>
-            <p v-if="medication.notes" class="notes">{{ medication.notes }}</p>
-          </div>
-          <div class="actions">
-            <button 
-              v-if="!medication.administered_at" 
-              @click="administerMedication(medication.id)" 
-              class="administer-btn"
-            >
-              Administrar
-            </button>
-            <button @click="openEdit(medication)" class="edit-btn">Editar</button>
-            <button @click="removeMedication(medication.id)" class="delete-btn">Eliminar</button>
+            <div class="actions">
+              <button 
+                v-if="!medication.administered_at" 
+                @click="administerMedication(medication.id)" 
+                class="administer-btn"
+              >
+                Administrar
+              </button>
+              <button @click="openEdit(medication)" class="edit-btn">Editar</button>
+              <button @click="removeMedication(medication.id)" class="delete-btn">Eliminar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -84,6 +103,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import MedicationForm from './MedicationForm.vue'
+import MedicationCalendar from './MedicationCalendar.vue'
 import IconSpinner from './icons/IconSpinner.vue'
 
 const props = defineProps({
@@ -99,6 +119,7 @@ const error = ref('')
 const showForm = ref(false)
 const isEdit = ref(false)
 const selectedMedication = ref(null)
+const showCalendar = ref(false)
 
 async function fetchMedications() {
   loading.value = true
@@ -218,6 +239,29 @@ async function removeMedication(id) {
 .header h3 {
   margin: 0;
   color: var(--color-heading);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.calendar-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-btn:hover {
+  background: var(--color-background-mute);
 }
 
 .add-btn {

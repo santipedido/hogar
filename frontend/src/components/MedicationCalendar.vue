@@ -1,0 +1,478 @@
+<template>
+  <div class="medication-calendar">
+    <div class="calendar-header">
+      <h3>Calendario de Medicación</h3>
+      <div class="calendar-controls">
+        <button @click="previousMonth" class="nav-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,18 9,12 15,6"></polyline>
+          </svg>
+        </button>
+        <span class="current-month">{{ currentMonthName }} {{ currentYear }}</span>
+        <button @click="nextMonth" class="nav-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9,18 15,12 9,6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loader">
+      <IconSpinner :size="30" />
+      <p>Cargando calendario...</p>
+    </div>
+
+    <div v-else-if="error" class="error">
+      <p>{{ error }}</p>
+      <button @click="fetchCalendarData" class="retry-btn">Reintentar</button>
+    </div>
+
+    <div v-else class="calendar-container">
+      <!-- Días de la semana -->
+      <div class="calendar-weekdays">
+        <div v-for="day in weekDays" :key="day" class="weekday">{{ day }}</div>
+      </div>
+
+      <!-- Días del mes -->
+      <div class="calendar-grid">
+        <div 
+          v-for="day in calendarDays" 
+          :key="day.date" 
+          class="calendar-day"
+          :class="{
+            'other-month': !day.isCurrentMonth,
+            'today': day.isToday,
+            'has-medications': day.medications && day.medications.length > 0
+          }"
+          @click="day.isCurrentMonth && day.medications && day.medications.length > 0 ? showDayDetails(day) : null"
+        >
+          <span class="day-number">{{ day.dayNumber }}</span>
+          <div v-if="day.medications && day.medications.length > 0" class="medication-indicators">
+            <div 
+              v-for="medication in day.medications.slice(0, 3)" 
+              :key="medication.id"
+              class="medication-dot"
+              :title="`${medication.med_name} - ${medication.dosage}`"
+            ></div>
+            <span v-if="day.medications.length > 3" class="more-indicator">+{{ day.medications.length - 3 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de detalles del día -->
+    <div v-if="showModal" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h4>{{ selectedDay?.date ? formatDate(selectedDay.date) : '' }}</h4>
+          <button @click="closeModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="selectedDay?.medications && selectedDay.medications.length > 0" class="day-medications">
+            <div v-for="medication in selectedDay.medications" :key="medication.id" class="medication-item">
+              <div class="medication-info">
+                <h5>{{ medication.med_name }}</h5>
+                <p class="dosage">{{ medication.dosage }}</p>
+                <p class="time">{{ formatTime(medication.administered_at) }}</p>
+                <p v-if="medication.notes" class="notes">{{ medication.notes }}</p>
+              </div>
+            </div>
+          </div>
+          <div v-else class="no-medications">
+            No hay medicaciones registradas para este día.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import IconSpinner from './icons/IconSpinner.vue'
+
+const props = defineProps({
+  residentId: {
+    type: String,
+    required: true
+  }
+})
+
+const currentYear = ref(new Date().getFullYear())
+const currentMonth = ref(new Date().getMonth() + 1)
+const loading = ref(false)
+const error = ref('')
+const calendarData = ref({ medications: [], history: {} })
+const showModal = ref(false)
+const selectedDay = ref(null)
+
+const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+const currentMonthName = computed(() => {
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ]
+  return months[currentMonth.value - 1]
+})
+
+const calendarDays = computed(() => {
+  const days = []
+  const firstDay = new Date(currentYear.value, currentMonth.value - 1, 1)
+  const lastDay = new Date(currentYear.value, currentMonth.value, 0)
+  const startDate = new Date(firstDay)
+  startDate.setDate(startDate.getDate() - firstDay.getDay())
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  for (let i = 0; i < 42; i++) {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + i)
+    
+    const dateKey = date.toISOString().split('T')[0]
+    const isCurrentMonth = date.getMonth() === currentMonth.value - 1
+    const isToday = date.getTime() === today.getTime()
+    
+    days.push({
+      date: dateKey,
+      dayNumber: date.getDate(),
+      isCurrentMonth,
+      isToday,
+      medications: calendarData.value.history[dateKey] || []
+    })
+  }
+  
+  return days
+})
+
+async function fetchCalendarData() {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/medications/history/calendar/${props.residentId}?year=${currentYear.value}&month=${currentMonth.value}`
+    )
+    if (!res.ok) throw new Error('No se pudo cargar el calendario')
+    calendarData.value = await res.json()
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
+  }
+}
+
+function previousMonth() {
+  if (currentMonth.value === 1) {
+    currentMonth.value = 12
+    currentYear.value--
+  } else {
+    currentMonth.value--
+  }
+  fetchCalendarData()
+}
+
+function nextMonth() {
+  if (currentMonth.value === 12) {
+    currentMonth.value = 1
+    currentYear.value++
+  } else {
+    currentMonth.value++
+  }
+  fetchCalendarData()
+}
+
+function showDayDetails(day) {
+  selectedDay.value = day
+  showModal.value = true
+}
+
+function closeModal() {
+  showModal.value = false
+  selectedDay.value = null
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('es-ES', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(date)
+}
+
+function formatTime(dateTimeString) {
+  const date = new Date(dateTimeString)
+  return new Intl.DateTimeFormat('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+onMounted(fetchCalendarData)
+</script>
+
+<style scoped>
+.medication-calendar {
+  padding: 1rem;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.calendar-header h3 {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: var(--color-background-mute);
+}
+
+.current-month {
+  font-weight: 600;
+  color: var(--color-text-dark);
+  min-width: 120px;
+  text-align: center;
+}
+
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: var(--color-text-light);
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-danger, #dc3545);
+  background: var(--color-background-soft);
+  border-radius: 8px;
+}
+
+.retry-btn {
+  background: transparent;
+  border: 1px solid var(--color-danger, #dc3545);
+  color: var(--color-danger, #dc3545);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.calendar-container {
+  background: var(--color-background-soft);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--color-background-mute);
+}
+
+.weekday {
+  padding: 1rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--color-text-dark);
+  font-size: 0.875rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day {
+  min-height: 80px;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: var(--color-background-mute);
+}
+
+.calendar-day.other-month {
+  background: var(--color-background-mute);
+  color: var(--color-text-light);
+}
+
+.calendar-day.today {
+  background: var(--color-primary);
+  color: white;
+}
+
+.calendar-day.has-medications {
+  background: rgba(var(--color-success-rgb, 40, 167, 69), 0.1);
+}
+
+.day-number {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.medication-indicators {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  right: 0.25rem;
+  display: flex;
+  gap: 0.125rem;
+  flex-wrap: wrap;
+}
+
+.medication-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-success, #28a745);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.more-indicator {
+  font-size: 0.625rem;
+  color: var(--color-text-light);
+  margin-left: 0.25rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--color-background);
+  border-radius: 10px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h4 {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-text-light);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.day-medications {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.medication-item {
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.medication-info h5 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-heading);
+}
+
+.dosage {
+  margin: 0.25rem 0;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.time {
+  margin: 0.25rem 0;
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+}
+
+.notes {
+  margin: 0.5rem 0 0 0;
+  color: var(--color-text-light);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.no-medications {
+  text-align: center;
+  color: var(--color-text-light);
+  padding: 2rem;
+}
+
+@media (max-width: 640px) {
+  .calendar-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .calendar-day {
+    min-height: 60px;
+    padding: 0.25rem;
+  }
+  
+  .day-number {
+    font-size: 0.75rem;
+  }
+  
+  .medication-dot {
+    width: 4px;
+    height: 4px;
+  }
+}
+</style> 
