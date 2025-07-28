@@ -43,6 +43,15 @@ async def upload_file(file: UploadFile = File(...)):
                 detail="Formato de archivo no permitido. Use: .jpg, .jpeg, .png o .gif"
             )
 
+        # Mapear extensiones a MIME types correctos
+        mime_type_map = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif'
+        }
+        content_type = mime_type_map.get(file_ext, 'image/jpeg')
+
         # Leer el archivo
         contents = await file.read()
         
@@ -95,7 +104,7 @@ async def upload_file(file: UploadFile = File(...)):
             response = supabase_client.storage.from_(BUCKET_NAME).upload(
                 path=new_filename,
                 file=contents,
-                file_options={"contentType": file.content_type}
+                file_options={"contentType": content_type}
             )
             
             logger.info(f"Archivo subido exitosamente: {response}")
