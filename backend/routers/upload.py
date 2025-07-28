@@ -90,15 +90,11 @@ async def upload_file(file: UploadFile = File(...)):
                         detail="No se pudo crear el bucket de almacenamiento. Por favor, contacta al administrador."
                     )
 
-            # Crear un archivo temporal en memoria
-            file_obj = io.BytesIO(contents)
-            file_obj.seek(0)  # Asegurarse de que el puntero está al inicio
-
             # Subir a Supabase Storage
             logger.info("Iniciando subida a Supabase Storage...")
             response = supabase_client.storage.from_(BUCKET_NAME).upload(
                 path=new_filename,
-                file=file_obj,
+                file=contents,
                 file_options={"contentType": file.content_type}
             )
             
