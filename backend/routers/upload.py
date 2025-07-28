@@ -51,6 +51,11 @@ async def upload_file(file: UploadFile = File(...)):
             '.gif': 'image/gif'
         }
         content_type = mime_type_map.get(file_ext, 'image/jpeg')
+        
+        # Forzar el content type correcto
+        logger.info(f"Original content type: {file.content_type}")
+        logger.info(f"File extension: {file_ext}")
+        logger.info(f"Mapped content type: {content_type}")
 
         # Leer el archivo
         contents = await file.read()
@@ -106,11 +111,23 @@ async def upload_file(file: UploadFile = File(...)):
             
             # Intentar con método alternativo
             try:
-                response = supabase_client.storage.from_(BUCKET_NAME).upload(
-                    path=new_filename,
-                    file=contents,
-                    file_options={"contentType": content_type}
-                )
+                # Crear un archivo temporal con el content type correcto
+                import tempfile
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+                    temp_file.write(contents)
+                    temp_file.flush()
+                    
+                    # Subir usando el archivo temporal
+                    with open(temp_file.name, 'rb') as f:
+                        response = supabase_client.storage.from_(BUCKET_NAME).upload(
+                            path=new_filename,
+                            file=f
+                        )
+                    
+                    # Limpiar archivo temporal
+                    import os
+                    os.unlink(temp_file.name)
+                    
             except Exception as e:
                 logger.error(f"Error con método upload: {str(e)}")
                 # Intentar método alternativo sin file_options
