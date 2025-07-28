@@ -13,16 +13,16 @@ class MedicationBase(BaseModel):
     med_name: str
     dosage: str
     frequency: str
-    scheduled_time: Optional[time]
-    administered_at: Optional[datetime]
-    administered_by_user_id: Optional[str]
-    notes: Optional[str]
+    scheduled_time: Optional[time] = None
+    notes: Optional[str] = None
 
 class MedicationCreate(MedicationBase):
     pass
 
 class Medication(MedicationBase):
     id: str
+    administered_at: Optional[datetime] = None
+    administered_by_user_id: Optional[str] = None
     class Config:
         orm_mode = True
 
@@ -60,11 +60,6 @@ async def create_medication(medication: MedicationCreate):
         if data.get('scheduled_time'):
             if isinstance(data['scheduled_time'], time):
                 data['scheduled_time'] = data['scheduled_time'].strftime('%H:%M:%S')
-        
-        # Convertir datetime a string si existe
-        if data.get('administered_at'):
-            if isinstance(data['administered_at'], datetime):
-                data['administered_at'] = data['administered_at'].isoformat()
 
         logger.info(f"Creating medication: {data}")
         response = supabase_client.table('medications').insert(data).execute()
@@ -83,11 +78,6 @@ async def update_medication(medication_id: str, medication: MedicationCreate):
         if data.get('scheduled_time'):
             if isinstance(data['scheduled_time'], time):
                 data['scheduled_time'] = data['scheduled_time'].strftime('%H:%M:%S')
-        
-        # Convertir datetime a string si existe
-        if data.get('administered_at'):
-            if isinstance(data['administered_at'], datetime):
-                data['administered_at'] = data['administered_at'].isoformat()
 
         logger.info(f"Updating medication {medication_id}: {data}")
         response = supabase_client.table('medications').update(data).eq('id', medication_id).execute()
