@@ -53,7 +53,7 @@
 
         <!-- Medicación -->
         <div v-if="activeTab === 'medication'" class="tab-panel">
-          <p class="coming-soon">Próximamente: Registro de medicación</p>
+          <MedicationList :residentId="resident.id" />
         </div>
 
         <!-- Signos Vitales -->
@@ -75,6 +75,7 @@ import { ref, onMounted } from 'vue'
 import IconSpinner from './icons/IconSpinner.vue'
 import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 import FamilyContactList from './FamilyContactList.vue'
+import MedicationList from './MedicationList.vue'
 
 const props = defineProps({
   residentId: {
@@ -112,7 +113,7 @@ async function loadResident() {
   error.value = ''
   try {
     const res = await fetch(import.meta.env.VITE_API_URL + `/api/residents/${props.residentId}`)
-    if (!res.ok) throw new Error('No se pudo cargar el perfil')
+    if (!res.ok) throw new Error('No se pudo cargar el residente')
     resident.value = await res.json()
   } catch (e) {
     error.value = e.message
@@ -128,19 +129,21 @@ onMounted(loadResident)
 .resident-profile {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
 }
 
-.loader, .error {
+.loader {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 4rem;
   gap: 1rem;
+  color: var(--color-text-light);
 }
 
 .error {
+  text-align: center;
+  padding: 2rem;
   color: var(--color-danger, #dc3545);
 }
 
@@ -151,12 +154,19 @@ onMounted(loadResident)
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  margin-top: 1rem;
 }
 
 .retry-btn:hover {
   background: var(--color-danger, #dc3545);
   color: white;
+}
+
+.profile-content {
+  background: var(--color-background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
 }
 
 .basic-info {
@@ -165,31 +175,32 @@ onMounted(loadResident)
   gap: 2rem;
   padding: 2rem;
   background: var(--color-background-soft);
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .photo-container {
+  position: relative;
+}
+
+.photo {
   width: 120px;
   height: 120px;
-  border-radius: 60px;
-  overflow: hidden;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--color-background);
+  box-shadow: var(--shadow-md);
+}
+
+.photo-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
   background: var(--color-background-mute);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid var(--color-primary);
-}
-
-.photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.photo-placeholder {
-  color: var(--color-text-light);
-  opacity: 0.5;
+  border: 4px solid var(--color-background);
+  box-shadow: var(--shadow-md);
 }
 
 .info {
@@ -199,6 +210,7 @@ onMounted(loadResident)
 .info h2 {
   margin: 0 0 0.5rem 0;
   color: var(--color-heading);
+  font-size: 1.75rem;
 }
 
 .status {
@@ -207,20 +219,21 @@ onMounted(loadResident)
   border-radius: 1rem;
   font-size: 0.875rem;
   font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 .status.independent {
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--color-success, #28a745);
+  color: white;
 }
 
-.status.semi-dependent {
-  color: #F59E0B;
-  background: rgba(245, 158, 11, 0.1);
+.status.semidependent {
+  background: var(--color-warning, #ffc107);
+  color: var(--color-text-dark);
 }
 
 .admission-date {
-  margin: 0.5rem 0 0 0;
+  margin: 0;
   color: var(--color-text-light);
   font-size: 0.875rem;
 }
@@ -229,8 +242,8 @@ onMounted(loadResident)
   background: var(--color-primary);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -241,43 +254,44 @@ onMounted(loadResident)
 
 .tabs {
   display: flex;
-  gap: 0.5rem;
+  background: var(--color-background);
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  padding-bottom: 1px;
 }
 
 .tab-btn {
-  padding: 0.75rem 1.5rem;
+  flex: 1;
+  padding: 1rem 1.5rem;
+  background: transparent;
   border: none;
-  background: none;
-  color: var(--color-text);
+  color: var(--color-text-light);
   cursor: pointer;
-  font-size: 0.875rem;
-  border-bottom: 2px solid transparent;
   transition: all 0.2s;
-  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .tab-btn:hover {
-  color: var(--color-primary);
+  background: var(--color-background-mute);
+  color: var(--color-text);
 }
 
 .tab-btn.active {
   color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  background: var(--color-background-soft);
 }
 
 .tab-content {
-  background: var(--color-background-soft);
-  border-radius: 12px;
   min-height: 400px;
+}
+
+.tab-panel {
+  padding: 0;
 }
 
 .coming-soon {
   text-align: center;
-  padding: 2rem;
+  padding: 4rem 2rem;
   color: var(--color-text-light);
   font-style: italic;
 }
@@ -286,11 +300,15 @@ onMounted(loadResident)
   .basic-info {
     flex-direction: column;
     text-align: center;
-    padding: 1.5rem;
+    gap: 1rem;
   }
-
+  
   .tabs {
-    padding: 0 1rem;
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    text-align: center;
   }
 }
 </style> 
