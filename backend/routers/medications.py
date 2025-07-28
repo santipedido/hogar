@@ -125,15 +125,7 @@ async def administer_medication(medication_id: str, user_id: str):
         medication = medication_response.data[0]
         now = datetime.now()
         
-        # Actualizar la medicación
-        update_data = {
-            'administered_at': now.isoformat(),
-            'administered_by_user_id': user_id
-        }
-        
-        supabase_client.table('medications').update(update_data).eq('id', medication_id).execute()
-        
-        # Guardar en historial
+        # Guardar en historial (siempre se guarda)
         history_data = {
             'medication_id': medication_id,
             'resident_id': medication['resident_id'],
@@ -207,4 +199,72 @@ async def get_medication_calendar(resident_id: str, year: int, month: int):
         
     except Exception as e:
         logger.error(f"Error getting medication calendar for resident {resident_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/medications/today-status/{resident_id}")
+async def get_today_medication_status(resident_id: str):
+    """Obtener el estado de administración de medicamentos para hoy"""
+    try:
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Obtener todas las medicaciones del residente
+        medications_response = supabase_client.table('medications').select("*").eq('resident_id', resident_id).execute()
+        medications = medications_response.data
+        
+        # Obtener administraciones de hoy
+        history_response = supabase_client.table('medication_history').select("*").eq('resident_id', resident_id).gte('administered_at', f"{today}T00:00:00").lt('administered_at', f"{today}T23:59:59").execute()
+        today_history = history_response.data
+        
+        # Procesar estado de cada medicación
+        medication_status = []
+        
+        for medication in medications:
+            # Contar cuántas veces se administró hoy
+            today_count = len([h for h in today_history if h['medication_id'] == medication['id']])
+            
+            # Determinar cuántas veces debería administrarse según la frecuencia
+            expected_count = get_expected_admin_count(medication['frequency'])
+            
+            medication_status.append({
+                **medication,
+                'administered_today': today_count,
+                'expected_today': expected_count,
+                'can_administer': today_count < expected_count,
+                'last_administered': get_last_administered(today_history, medication['id'])
+            })
+        
+        return {
+            "date": today,
+            "medications": medication_status
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting today's medication status for resident {resident_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def get_expected_admin_count(frequency: str) -> int:
+    """Determinar cuántas veces se debe administrar según la frecuencia"""
+    frequency_lower = frequency.lower()
+    if 'una vez' in frequency_lower:
+        return 1
+    elif 'dos veces' in frequency_lower:
+        return 2
+    elif 'tres veces' in frequency_lower:
+        return 3
+    elif 'cada 8 horas' in frequency_lower:
+        return 3  # 24/8 = 3 veces al día
+    elif 'cada 12 horas' in frequency_lower:
+        return 2  # 24/12 = 2 veces al día
+    elif 'según necesidad' in frequency_lower:
+        return 5  # Máximo 5 veces por día para "según necesidad"
+    else:
+        return 1  # Por defecto
+
+def get_last_administered(history: list, medication_id: str) -> str:
+    """Obtener la última hora de administración de hoy"""
+    medication_history = [h for h in history if h['medication_id'] == medication_id]
+    if medication_history:
+        # Ordenar por hora y tomar la más reciente
+        medication_history.sort(key=lambda x: x['administered_at'], reverse=True)
+        return medication_history[0]['administered_at']
+    return None 

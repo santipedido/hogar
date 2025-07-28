@@ -50,11 +50,14 @@
           No hay medicación registrada.
         </div>
         <div v-else class="medications">
-          <div v-for="medication in medications" :key="medication.id" class="medication-card" :class="{ 'administered': medication.administered_at }">
+          <div v-for="medication in medications" :key="medication.id" class="medication-card" :class="{ 'completed': medication.administered_today >= medication.expected_today }">
             <div class="medication-info">
               <div class="name-badge">
                 <h4>{{ medication.med_name }}</h4>
-                <span v-if="medication.administered_at" class="administered-badge">Administrada</span>
+                <div class="status-badges">
+                  <span v-if="medication.administered_today >= medication.expected_today" class="completed-badge">Completada</span>
+                  <span v-else class="pending-badge">{{ medication.administered_today }}/{{ medication.expected_today }}</span>
+                </div>
               </div>
               <p class="dosage">{{ medication.dosage }}</p>
               <p class="frequency">
@@ -73,18 +76,18 @@
                 </svg>
                 Hora: {{ formatTime(medication.scheduled_time) }}
               </p>
-              <p v-if="medication.administered_at" class="administered-time">
+              <p v-if="medication.last_administered" class="last-administered">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22,4 12,14.01 9,11.01"></polyline>
                 </svg>
-                Administrada: {{ formatDateTime(medication.administered_at) }}
+                Última: {{ formatDateTime(medication.last_administered) }}
               </p>
               <p v-if="medication.notes" class="notes">{{ medication.notes }}</p>
             </div>
             <div class="actions">
               <button 
-                v-if="!medication.administered_at" 
+                v-if="medication.can_administer" 
                 @click="administerMedication(medication.id)" 
                 class="administer-btn"
               >
@@ -125,9 +128,10 @@ async function fetchMedications() {
   loading.value = true
   error.value = ''
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + `/api/medications/resident/${props.residentId}`)
+    const res = await fetch(import.meta.env.VITE_API_URL + `/api/medications/today-status/${props.residentId}`)
     if (!res.ok) throw new Error('No se pudo cargar la medicación')
-    medications.value = await res.json()
+    const data = await res.json()
+    medications.value = data.medications
   } catch (e) {
     error.value = e.message
   } finally {
@@ -343,7 +347,7 @@ async function removeMedication(id) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.medication-card.administered {
+.medication-card.completed {
   border: 2px solid var(--color-success, #28a745);
   opacity: 0.8;
 }
@@ -351,7 +355,7 @@ async function removeMedication(id) {
 .name-badge {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
   margin-bottom: 0.5rem;
 }
 
@@ -360,12 +364,26 @@ async function removeMedication(id) {
   color: var(--color-heading);
 }
 
-.administered-badge {
+.status-badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.completed-badge {
   background: var(--color-success, #28a745);
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 1rem;
   font-size: 0.75rem;
+}
+
+.pending-badge {
+  background: var(--color-warning, #ffc107);
+  color: var(--color-text-dark);
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .dosage {
@@ -375,7 +393,7 @@ async function removeMedication(id) {
   font-weight: 500;
 }
 
-.frequency, .scheduled-time, .administered-time {
+.frequency, .scheduled-time, .last-administered {
   display: flex;
   align-items: center;
   gap: 0.5rem;
