@@ -109,11 +109,11 @@ async def upload_file(file: UploadFile = File(...)):
                 response = supabase_client.storage.from_(BUCKET_NAME).upload(
                     path=new_filename,
                     file=contents,
-                    file_options={"contentType": content_type, "upsert": True}
+                    file_options={"contentType": content_type}
                 )
             except Exception as e:
                 logger.error(f"Error con método upload: {str(e)}")
-                # Intentar método alternativo
+                # Intentar método alternativo sin file_options
                 response = supabase_client.storage.from_(BUCKET_NAME).upload(
                     path=new_filename,
                     file=contents
