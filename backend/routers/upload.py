@@ -131,10 +131,10 @@ async def upload_file(file: UploadFile = File(...)):
             except Exception as e:
                 logger.error(f"Error con método upload: {str(e)}")
                 # Intentar método alternativo sin file_options
-                response = supabase_client.storage.from_(BUCKET_NAME).upload(
-                    path=new_filename,
+            response = supabase_client.storage.from_(BUCKET_NAME).upload(
+                path=new_filename,
                     file=contents
-                )
+            )
             
             logger.info(f"Archivo subido exitosamente: {response}")
 

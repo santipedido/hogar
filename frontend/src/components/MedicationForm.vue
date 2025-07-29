@@ -68,7 +68,7 @@
     </form>
   </div>
 </template>
-
+ 
 <script setup>
 import { ref } from 'vue'
 
@@ -106,7 +106,7 @@ function handleSubmit() {
 function closeForm() {
   emit('cancel')
 }
-</script>
+</script> 
 
 <style scoped>
 .medication-form {

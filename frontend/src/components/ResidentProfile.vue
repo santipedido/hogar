@@ -302,7 +302,7 @@ onMounted(loadResident)
     text-align: center;
     gap: 1rem;
   }
-  
+
   .tabs {
     flex-direction: column;
   }
