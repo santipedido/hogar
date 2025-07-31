@@ -58,7 +58,7 @@
 
         <!-- Signos Vitales -->
         <div v-if="activeTab === 'vitals'" class="tab-panel">
-          <p class="coming-soon">Próximamente: Registro de signos vitales</p>
+          <VitalSignsList :residentId="resident.id" />
         </div>
 
         <!-- Actividades -->
@@ -76,6 +76,7 @@ import IconSpinner from './icons/IconSpinner.vue'
 import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 import FamilyContactList from './FamilyContactList.vue'
 import MedicationList from './MedicationList.vue'
+import VitalSignsList from './VitalSignsList.vue'
 
 const props = defineProps({
   residentId: {
