@@ -149,15 +149,21 @@ const calendarDays = computed(() => {
 })
 
 async function fetchCalendarData() {
+  console.log('VITE_API_URL:', import.meta.env.VITE_API_URL)
+  console.log('Fetching calendar data for resident:', props.residentId, 'year:', currentYear.value, 'month:', currentMonth.value)
   loading.value = true
   error.value = ''
   try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/vital-signs/calendar/${props.residentId}?year=${currentYear.value}&month=${currentMonth.value}`
-    )
+    const url = `${import.meta.env.VITE_API_URL}/api/vital-signs/calendar/${props.residentId}?year=${currentYear.value}&month=${currentMonth.value}`
+    console.log('Fetching URL:', url)
+    const res = await fetch(url)
+    console.log('Response status:', res.status)
     if (!res.ok) throw new Error('No se pudo cargar el calendario')
-    calendarData.value = await res.json()
+    const data = await res.json()
+    console.log('Calendar data received:', data)
+    calendarData.value = data
   } catch (e) {
+    console.error('Error fetching calendar data:', e)
     error.value = e.message
   } finally {
     loading.value = false
@@ -231,7 +237,10 @@ function getVitalSignColor(type) {
   return colors[type] || 'default'
 }
 
-onMounted(fetchCalendarData)
+onMounted(() => {
+  console.log('VitalSignsCalendar montado, residentId:', props.residentId)
+  fetchCalendarData()
+})
 </script>
 
 <style scoped>
