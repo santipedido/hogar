@@ -9,6 +9,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+@router.get("/test")
+def test_vital_signs():
+    return {"message": "vital signs router is working"}
+
 def prepare_vital_sign_data(data: dict) -> dict:
     """Prepara los datos del signo vital para Supabase"""
     # Convertir fechas a string ISO
