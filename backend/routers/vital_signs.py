@@ -1,11 +1,31 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
-from models.vital_sign import VitalSign
+from datetime import datetime
+from pydantic import BaseModel, Field
 from supabase_client import supabase_client
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+# Definir modelo aquí para evitar errores de importación
+class VitalSign(BaseModel):
+    id: Optional[str] = None
+    resident_id: str
+    type: str = Field(..., description="Tipo de signo vital: Temperatura, Frecuencia Cardíaca, etc.")
+    value: Optional[float] = None
+    unit: Optional[str] = None
+    systolic: Optional[float] = None
+    diastolic: Optional[float] = None
+    taken_at: datetime
+    notes: Optional[str] = None
+    taken_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+        validate_assignment = True
+        arbitrary_types_allowed = True
 
 router = APIRouter()
 
