@@ -3,7 +3,7 @@
     <div class="header">
       <h3>Signos Vitales</h3>
       <div class="header-actions">
-        <button @click="toggleCalendar" class="calendar-btn">
+        <button @click="showCalendar = !showCalendar" class="calendar-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -112,13 +112,7 @@ const isEdit = ref(false)
 const selectedVitalSign = ref(null)
 const showCalendar = ref(false)
 
-// Debug: verificar el estado del calendario
-console.log('Estado inicial de showCalendar:', showCalendar.value)
 
-function toggleCalendar() {
-  showCalendar.value = !showCalendar.value
-  console.log('Calendario toggled, nuevo valor:', showCalendar.value)
-}
 
 const currentPage = ref(1)
 const pagination = ref({
