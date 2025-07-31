@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import residents, upload, family_contacts, medications, vital_signs
+from routers import residents, upload, family_contacts, medications
+from routers import vital_signs
 
 app = FastAPI()
 
@@ -26,4 +27,4 @@ app.include_router(vital_signs.router, prefix="/api")
 
 @app.get("/ping")
 def ping():
-    return {"message": "pong"} 
+    return {"message": "pong", "status": "healthy"} 
