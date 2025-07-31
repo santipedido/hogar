@@ -150,3 +150,70 @@ async def get_latest_vital_signs_by_resident(resident_id: str, limit: int = 5):
     except Exception as e:
         logger.error(f"Error getting latest vital signs for resident {resident_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/vital-signs/resident/{resident_id}/paginated")
+async def get_vital_signs_paginated(resident_id: str, page: int = 1, limit: int = 10):
+    """Obtener signos vitales paginados de un residente"""
+    try:
+        # Calcular offset
+        offset = (page - 1) * limit
+        
+        # Obtener el total de registros
+        count_response = supabase_client.table('vital_signs').select("*", count="exact").eq('resident_id', resident_id).execute()
+        total_count = count_response.count
+        
+        # Obtener registros paginados
+        response = supabase_client.table('vital_signs').select("*").eq('resident_id', resident_id).order('taken_at', desc=True).range(offset, offset + limit - 1).execute()
+        
+        # Calcular información de paginación
+        total_pages = (total_count + limit - 1) // limit  # ceil division
+        
+        return {
+            "data": response.data,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_count": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting paginated vital signs for resident {resident_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/vital-signs/calendar/{resident_id}")
+async def get_vital_signs_calendar(resident_id: str, year: int, month: int):
+    """Obtener datos del calendario de signos vitales para un mes específico"""
+    try:
+        # Obtener signos vitales del mes
+        start_date = f"{year}-{month:02d}-01"
+        if month == 12:
+            end_date = f"{year + 1}-01-01"
+        else:
+            end_date = f"{year}-{month + 1:02d}-01"
+            
+        response = supabase_client.table('vital_signs').select("*").eq('resident_id', resident_id).gte('taken_at', start_date).lt('taken_at', end_date).order('taken_at', desc=True).execute()
+        vital_signs = response.data
+        
+        # Procesar datos para el calendario
+        calendar_data = {}
+        
+        # Agrupar signos vitales por fecha
+        for record in vital_signs:
+            date_key = record['taken_at'][:10]  # YYYY-MM-DD
+            if date_key not in calendar_data:
+                calendar_data[date_key] = []
+            calendar_data[date_key].append(record)
+        
+        return {
+            "vital_signs": vital_signs,
+            "calendar_data": calendar_data,
+            "month": month,
+            "year": year
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting vital signs calendar for resident {resident_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
