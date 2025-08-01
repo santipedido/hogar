@@ -29,7 +29,7 @@
 
     <div v-else class="calendar-container">
       <!-- Mensaje si no hay datos -->
-      <div v-if="Object.keys(calendarData.value.calendar_data).length === 0" class="no-data-message">
+      <div v-if="calendarData.value && calendarData.value.calendar_data && Object.keys(calendarData.value.calendar_data).length === 0" class="no-data-message">
         <p>No hay signos vitales registrados para {{ currentMonthName }} {{ currentYear }}</p>
         <p>Usa los botones de navegación para buscar en otros meses</p>
       </div>
@@ -133,6 +133,12 @@ const calendarDays = computed(() => {
   
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+
+  // Verificar que calendarData.value existe y tiene la estructura correcta
+  if (!calendarData.value || !calendarData.value.calendar_data) {
+    console.log('calendarData.value is not ready yet:', calendarData.value)
+    return days
+  }
 
   console.log('calendarData.value:', calendarData.value)
   console.log('calendar_data:', calendarData.value.calendar_data)
