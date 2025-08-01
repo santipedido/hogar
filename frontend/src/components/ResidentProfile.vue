@@ -60,11 +60,6 @@
         <div v-if="activeTab === 'vitals'" class="tab-panel">
           <VitalSignsList :residentId="resident.id" />
         </div>
-
-        <!-- Actividades -->
-        <div v-if="activeTab === 'activities'" class="tab-panel">
-          <ActivityList :residentId="resident.id" />
-        </div>
       </div>
     </div>
   </div>
@@ -77,7 +72,6 @@ import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 import FamilyContactList from './FamilyContactList.vue'
 import MedicationList from './MedicationList.vue'
 import VitalSignsList from './VitalSignsList.vue'
-import ActivityList from './ActivityList.vue'
 
 const props = defineProps({
   residentId: {
@@ -96,8 +90,7 @@ const activeTab = ref('contacts')
 const tabs = [
   { id: 'contacts', name: 'Contactos Familiares' },
   { id: 'medication', name: 'Medicación' },
-  { id: 'vitals', name: 'Signos Vitales' },
-  { id: 'activities', name: 'Actividades' }
+  { id: 'vitals', name: 'Signos Vitales' }
 ]
 
 function formatDate(dateString) {
