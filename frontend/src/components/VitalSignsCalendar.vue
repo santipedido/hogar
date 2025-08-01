@@ -128,6 +128,9 @@ const calendarDays = computed(() => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
+  console.log('calendarData.value:', calendarData.value)
+  console.log('calendar_data:', calendarData.value.calendar_data)
+
   for (let i = 0; i < 42; i++) {
     const date = new Date(startDate)
     date.setDate(startDate.getDate() + i)
@@ -136,12 +139,17 @@ const calendarDays = computed(() => {
     const isCurrentMonth = date.getMonth() === currentMonth.value - 1
     const isToday = date.getTime() === today.getTime()
     
+    const vitalSigns = calendarData.value.calendar_data[dateKey] || []
+    if (vitalSigns.length > 0) {
+      console.log(`Day ${dateKey} has ${vitalSigns.length} vital signs:`, vitalSigns)
+    }
+    
     days.push({
       date: dateKey,
       dayNumber: date.getDate(),
       isCurrentMonth,
       isToday,
-      vitalSigns: calendarData.value.calendar_data[dateKey] || []
+      vitalSigns: vitalSigns
     })
   }
   
@@ -149,15 +157,20 @@ const calendarDays = computed(() => {
 })
 
 async function fetchCalendarData() {
+  console.log('Fetching calendar data for resident:', props.residentId, 'year:', currentYear.value, 'month:', currentMonth.value)
   loading.value = true
   error.value = ''
   try {
     const res = await fetch(
       `${import.meta.env.VITE_API_URL}/api/vital-signs/calendar/${props.residentId}?year=${currentYear.value}&month=${currentMonth.value}`
     )
+    console.log('Response status:', res.status)
     if (!res.ok) throw new Error('No se pudo cargar el calendario')
-    calendarData.value = await res.json()
+    const data = await res.json()
+    console.log('Calendar data received:', data)
+    calendarData.value = data
   } catch (e) {
+    console.error('Error fetching calendar data:', e)
     error.value = e.message
   } finally {
     loading.value = false
@@ -185,8 +198,11 @@ function nextMonth() {
 }
 
 function showDayDetails(day) {
+  console.log('showDayDetails called with day:', day)
+  console.log('day.vitalSigns:', day.vitalSigns)
   selectedDay.value = day
   showModal.value = true
+  console.log('Modal should be visible now, showModal:', showModal.value)
 }
 
 function closeModal() {
