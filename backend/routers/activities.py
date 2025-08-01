@@ -103,6 +103,16 @@ async def create_activity(activity: Activity):
         data = prepare_activity_data(activity.dict())
         logger.info(f"Creating activity with data: {data}")
         
+        # Validar que los campos obligatorios estén presentes
+        required_fields = ['resident_id', 'type', 'subtype', 'title', 'scheduled_at', 'participants']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        
+        if missing_fields:
+            raise HTTPException(
+                status_code=422, 
+                detail=f"Campos obligatorios faltantes: {', '.join(missing_fields)}"
+            )
+        
         response = supabase_client.table('activities').insert(data).execute()
         
         if not response.data:
@@ -110,9 +120,11 @@ async def create_activity(activity: Activity):
             
         logger.info(f"Create response: {response.data}")
         return response.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating activity: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @router.put("/activities/{activity_id}", response_model=Activity)
 async def update_activity(activity_id: str, activity: Activity):

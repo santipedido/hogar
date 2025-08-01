@@ -314,9 +314,54 @@ function updateParticipantsData() {
 }
 
 function submitForm() {
+  // Validar campos obligatorios
+  if (!form.value.type) {
+    alert('Por favor selecciona un tipo de actividad')
+    return
+  }
+  
+  if (!form.value.subtype) {
+    alert('Por favor selecciona una subcategoría')
+    return
+  }
+  
+  if (!form.value.title || form.value.title.trim() === '') {
+    alert('Por favor ingresa un título para la actividad')
+    return
+  }
+  
+  if (!form.value.scheduled_at) {
+    alert('Por favor selecciona una fecha y hora para la actividad')
+    return
+  }
+  
+  if (!form.value.participants) {
+    alert('Por favor selecciona el tipo de participación')
+    return
+  }
+  
+  // Si es actividad recurrente, validar el día
+  if (form.value.is_recurring && !form.value.recurrence_day) {
+    alert('Por favor selecciona un día de la semana para actividades recurrentes')
+    return
+  }
+
   const activityData = {
     ...form.value,
     resident_id: props.residentId
+  }
+  
+  // Limpiar campos opcionales vacíos
+  if (!activityData.description || activityData.description.trim() === '') {
+    activityData.description = null
+  }
+  
+  if (!activityData.notes || activityData.notes.trim() === '') {
+    activityData.notes = null
+  }
+  
+  if (!activityData.registered_by || activityData.registered_by.trim() === '') {
+    activityData.registered_by = null
   }
   
   if (activityData.scheduled_at) {
