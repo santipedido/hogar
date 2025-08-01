@@ -63,7 +63,7 @@
 
         <!-- Actividades -->
         <div v-if="activeTab === 'activities'" class="tab-panel">
-          <p class="coming-soon">Próximamente: Registro de actividades</p>
+          <ActivityList :residentId="resident.id" />
         </div>
       </div>
     </div>
@@ -77,6 +77,7 @@ import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 import FamilyContactList from './FamilyContactList.vue'
 import MedicationList from './MedicationList.vue'
 import VitalSignsList from './VitalSignsList.vue'
+import ActivityList from './ActivityList.vue'
 
 const props = defineProps({
   residentId: {
