@@ -87,6 +87,16 @@
                 <p class="type">{{ activity.type }} - {{ activity.subtype }}</p>
                 <p class="time">{{ formatTime(activity.scheduled_at) }}</p>
                 <p class="participants">Participantes: {{ activity.participants }}</p>
+                <div v-if="activity.participants_data && activity.participants_data.length > 0" class="participants-details">
+                  <span 
+                    v-for="participant in activity.participants_data" 
+                    :key="`${participant.type}-${participant.id || participant.name}`"
+                    class="participant-badge"
+                    :class="participant.type"
+                  >
+                    {{ participant.name }}
+                  </span>
+                </div>
                 <p v-if="activity.description" class="description">{{ activity.description }}</p>
                 <p v-if="activity.notes" class="notes">{{ activity.notes }}</p>
                 <p v-if="activity.registered_by" class="registered-by">Registrado por: {{ activity.registered_by }}</p>
@@ -588,6 +598,35 @@ onMounted(fetchCalendarData)
 .recurrence-day {
   color: var(--color-text-light);
   font-size: 0.875rem;
+}
+
+.participants-details {
+  margin: 0.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.participant-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.participant-badge.resident {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.participant-badge.staff {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.participant-badge.family {
+  background: #fff3e0;
+  color: #e65100;
 }
 
 .no-activities {

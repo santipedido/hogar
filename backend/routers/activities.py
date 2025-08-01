@@ -11,6 +11,13 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+from typing import List, Dict, Any
+
+class Participant(BaseModel):
+    type: str = Field(..., description="Tipo de participante: resident, staff, family")
+    id: Optional[str] = Field(None, description="ID del residente (solo para type=resident)")
+    name: str = Field(..., description="Nombre del participante")
+
 class Activity(BaseModel):
     id: Optional[str] = None
     resident_id: str
@@ -21,6 +28,7 @@ class Activity(BaseModel):
     scheduled_at: datetime
     completed_at: Optional[datetime] = None
     participants: str = Field(..., description="Participantes: Residente solo, Con otros residentes, Con personal, Con familiares, Grupo mixto")
+    participants_data: Optional[List[Dict[str, Any]]] = Field(default=[], description="Datos detallados de participantes")
     notes: Optional[str] = None
     registered_by: Optional[str] = None
     status: str = Field(default="scheduled", description="Estado: scheduled, completed, cancelled")
@@ -211,4 +219,14 @@ async def get_recurring_activities(resident_id: str):
         return response.data
     except Exception as e:
         logger.error(f"Error getting recurring activities for resident {resident_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/activities/available-residents")
+async def get_available_residents():
+    """Obtener lista de residentes disponibles para actividades"""
+    try:
+        response = supabase_client.table('residents').select("id, name, status").order('name').execute()
+        return response.data
+    except Exception as e:
+        logger.error(f"Error getting available residents: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

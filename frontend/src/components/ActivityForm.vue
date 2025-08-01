@@ -40,15 +40,125 @@
         </div>
 
         <div class="form-group">
-          <label for="participants">Participantes</label>
-          <select v-model="form.participants" id="participants" required>
-            <option value="">Selecciona participantes</option>
+          <label for="participants">Tipo de Participación</label>
+          <select v-model="form.participants" id="participants" required @change="onParticipantsTypeChange">
+            <option value="">Selecciona tipo de participación</option>
             <option value="Residente solo">Residente solo</option>
             <option value="Con otros residentes">Con otros residentes</option>
             <option value="Con personal">Con personal</option>
             <option value="Con familiares">Con familiares</option>
             <option value="Grupo mixto">Grupo mixto</option>
           </select>
+        </div>
+
+        <!-- Selección de participantes específicos -->
+        <div class="form-group" v-if="showParticipantsSelection">
+          <label>Seleccionar Participantes</label>
+          
+          <!-- Residentes -->
+          <div class="participants-section" v-if="showResidentsSelection">
+            <h4>Residentes</h4>
+            <div class="participants-list">
+              <label class="participant-item">
+                <input 
+                  type="checkbox" 
+                  :value="{ type: 'resident', id: residentId, name: currentResidentName }"
+                  v-model="selectedParticipants"
+                  @change="updateParticipantsData"
+                />
+                <span>{{ currentResidentName }} (actual)</span>
+              </label>
+              <label 
+                v-for="resident in availableResidents" 
+                :key="resident.id"
+                class="participant-item"
+                v-if="resident.id !== residentId"
+              >
+                <input 
+                  type="checkbox" 
+                  :value="{ type: 'resident', id: resident.id, name: resident.name }"
+                  v-model="selectedParticipants"
+                  @change="updateParticipantsData"
+                />
+                <span>{{ resident.name }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Personal -->
+          <div class="participants-section" v-if="showStaffSelection">
+            <h4>Personal</h4>
+            <div class="participants-list">
+              <div class="add-participant">
+                <input 
+                  type="text" 
+                  v-model="newStaffName" 
+                  placeholder="Nombre del personal"
+                  @keyup.enter="addStaffMember"
+                />
+                <button type="button" @click="addStaffMember" class="add-btn-small">Agregar</button>
+              </div>
+              <label 
+                v-for="(staff, index) in staffMembers" 
+                :key="index"
+                class="participant-item"
+              >
+                <input 
+                  type="checkbox" 
+                  :value="{ type: 'staff', name: staff }"
+                  v-model="selectedParticipants"
+                  @change="updateParticipantsData"
+                />
+                <span>{{ staff }}</span>
+                <button type="button" @click="removeStaffMember(index)" class="remove-btn">×</button>
+              </label>
+            </div>
+          </div>
+
+          <!-- Familiares -->
+          <div class="participants-section" v-if="showFamilySelection">
+            <h4>Familiares</h4>
+            <div class="participants-list">
+              <div class="add-participant">
+                <input 
+                  type="text" 
+                  v-model="newFamilyName" 
+                  placeholder="Nombre del familiar"
+                  @keyup.enter="addFamilyMember"
+                />
+                <button type="button" @click="addFamilyMember" class="add-btn-small">Agregar</button>
+              </div>
+              <label 
+                v-for="(family, index) in familyMembers" 
+                :key="index"
+                class="participant-item"
+              >
+                <input 
+                  type="checkbox" 
+                  :value="{ type: 'family', name: family }"
+                  v-model="selectedParticipants"
+                  @change="updateParticipantsData"
+                />
+                <span>{{ family }}</span>
+                <button type="button" @click="removeFamilyMember(index)" class="remove-btn">×</button>
+              </label>
+            </div>
+          </div>
+
+          <!-- Resumen de participantes seleccionados -->
+          <div class="selected-participants" v-if="selectedParticipants.length > 0">
+            <h4>Participantes Seleccionados:</h4>
+            <div class="participants-summary">
+              <span 
+                v-for="participant in selectedParticipants" 
+                :key="`${participant.type}-${participant.id || participant.name}`"
+                class="participant-tag"
+              >
+                {{ participant.name }}
+                <button type="button" @click="removeParticipant(participant)" class="remove-tag">×</button>
+              </span>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -133,11 +243,38 @@ const form = ref({
   scheduled_at: '',
   completed_at: '',
   participants: '',
+  participants_data: [],
   status: 'scheduled',
   is_recurring: false,
   recurrence_day: '',
   notes: '',
   registered_by: ''
+})
+
+// Datos para la selección de participantes
+const availableResidents = ref([])
+const currentResidentName = ref('')
+const selectedParticipants = ref([])
+const staffMembers = ref([])
+const familyMembers = ref([])
+const newStaffName = ref('')
+const newFamilyName = ref('')
+
+// Computed para mostrar/ocultar secciones
+const showParticipantsSelection = computed(() => {
+  return form.value.participants && form.value.participants !== 'Residente solo'
+})
+
+const showResidentsSelection = computed(() => {
+  return ['Con otros residentes', 'Grupo mixto'].includes(form.value.participants)
+})
+
+const showStaffSelection = computed(() => {
+  return ['Con personal', 'Grupo mixto'].includes(form.value.participants)
+})
+
+const showFamilySelection = computed(() => {
+  return ['Con familiares', 'Grupo mixto'].includes(form.value.participants)
 })
 
 // Subcategorías por tipo de actividad
@@ -155,6 +292,75 @@ const availableSubtypes = computed(() => {
 function onTypeChange() {
   // Reset subtype when type changes
   form.value.subtype = ''
+}
+
+function onParticipantsTypeChange() {
+  // Reset participants when type changes
+  selectedParticipants.value = []
+  form.value.participants_data = []
+  
+  // Auto-select current resident for "Residente solo"
+  if (form.value.participants === 'Residente solo') {
+    selectedParticipants.value = [{ type: 'resident', id: props.residentId, name: currentResidentName.value }]
+    updateParticipantsData()
+  }
+}
+
+async function loadAvailableResidents() {
+  try {
+    const res = await fetch(import.meta.env.VITE_API_URL + '/api/activities/available-residents')
+    if (!res.ok) throw new Error('No se pudieron cargar los residentes')
+    availableResidents.value = await res.json()
+  } catch (e) {
+    console.error('Error loading residents:', e)
+  }
+}
+
+function addStaffMember() {
+  if (newStaffName.value.trim()) {
+    staffMembers.value.push(newStaffName.value.trim())
+    newStaffName.value = ''
+  }
+}
+
+function removeStaffMember(index) {
+  staffMembers.value.splice(index, 1)
+  // Remove from selected participants
+  selectedParticipants.value = selectedParticipants.value.filter(p => 
+    !(p.type === 'staff' && p.name === staffMembers.value[index])
+  )
+  updateParticipantsData()
+}
+
+function addFamilyMember() {
+  if (newFamilyName.value.trim()) {
+    familyMembers.value.push(newFamilyName.value.trim())
+    newFamilyName.value = ''
+  }
+}
+
+function removeFamilyMember(index) {
+  familyMembers.value.splice(index, 1)
+  // Remove from selected participants
+  selectedParticipants.value = selectedParticipants.value.filter(p => 
+    !(p.type === 'family' && p.name === familyMembers.value[index])
+  )
+  updateParticipantsData()
+}
+
+function removeParticipant(participant) {
+  const index = selectedParticipants.value.findIndex(p => 
+    p.type === participant.type && 
+    (p.id === participant.id || p.name === participant.name)
+  )
+  if (index > -1) {
+    selectedParticipants.value.splice(index, 1)
+    updateParticipantsData()
+  }
+}
+
+function updateParticipantsData() {
+  form.value.participants_data = selectedParticipants.value
 }
 
 function submitForm() {
@@ -196,11 +402,20 @@ watch(() => props.modelValue, (newValue) => {
 }, { immediate: true })
 
 // Set default scheduled_at to current date/time
-onMounted(() => {
+onMounted(async () => {
   if (!props.modelValue) {
     const now = new Date()
     now.setMinutes(now.getMinutes() - now.getMinutes() % 30) // Round to nearest 30 minutes
     form.value.scheduled_at = now.toISOString().slice(0, 16)
+  }
+  
+  // Load available residents
+  await loadAvailableResidents()
+  
+  // Get current resident name
+  const currentResident = availableResidents.value.find(r => r.id === props.residentId)
+  if (currentResident) {
+    currentResidentName.value = currentResident.name
   }
 })
 </script>
@@ -273,6 +488,116 @@ onMounted(() => {
 .checkbox-label input[type="checkbox"] {
   width: auto;
   margin: 0;
+}
+
+.participants-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+}
+
+.participants-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.participant-item:hover {
+  background: var(--color-background-mute);
+}
+
+.participant-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.add-participant {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.add-participant input {
+  flex: 1;
+  margin: 0;
+}
+
+.add-btn-small {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.remove-btn {
+  background: var(--color-danger);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.selected-participants {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+}
+
+.selected-participants h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.participants-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.participant-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--color-primary);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+}
+
+.remove-tag {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  margin-left: 0.25rem;
 }
 
 .form-actions {
