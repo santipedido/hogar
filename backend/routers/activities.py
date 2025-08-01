@@ -220,13 +220,3 @@ async def get_recurring_activities(resident_id: str):
     except Exception as e:
         logger.error(f"Error getting recurring activities for resident {resident_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/activities/available-residents")
-async def get_available_residents():
-    """Obtener lista de residentes disponibles para actividades"""
-    try:
-        response = supabase_client.table('residents').select("id, name, status").order('name').execute()
-        return response.data
-    except Exception as e:
-        logger.error(f"Error getting available residents: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))

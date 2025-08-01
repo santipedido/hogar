@@ -44,7 +44,6 @@
           <select v-model="form.participants" id="participants" required @change="onParticipantsTypeChange">
             <option value="">Selecciona tipo de participación</option>
             <option value="Residente solo">Residente solo</option>
-            <option value="Con otros residentes">Con otros residentes</option>
             <option value="Con personal">Con personal</option>
             <option value="Con familiares">Con familiares</option>
             <option value="Grupo mixto">Grupo mixto</option>
@@ -55,36 +54,6 @@
         <div class="form-group" v-if="showParticipantsSelection">
           <label>Seleccionar Participantes</label>
           
-          <!-- Residentes -->
-          <div class="participants-section" v-if="showResidentsSelection">
-            <h4>Residentes</h4>
-            <div class="participants-list">
-              <label class="participant-item">
-                <input 
-                  type="checkbox" 
-                  :value="{ type: 'resident', id: residentId, name: currentResidentName }"
-                  v-model="selectedParticipants"
-                  @change="updateParticipantsData"
-                />
-                <span>{{ currentResidentName }} (actual)</span>
-              </label>
-              <label 
-                v-for="resident in availableResidents" 
-                :key="resident.id"
-                class="participant-item"
-                v-if="resident.id !== residentId"
-              >
-                <input 
-                  type="checkbox" 
-                  :value="{ type: 'resident', id: resident.id, name: resident.name }"
-                  v-model="selectedParticipants"
-                  @change="updateParticipantsData"
-                />
-                <span>{{ resident.name }}</span>
-              </label>
-            </div>
-          </div>
-
           <!-- Personal -->
           <div class="participants-section" v-if="showStaffSelection">
             <h4>Personal</h4>
@@ -252,8 +221,6 @@ const form = ref({
 })
 
 // Datos para la selección de participantes
-const availableResidents = ref([])
-const currentResidentName = ref('')
 const selectedParticipants = ref([])
 const staffMembers = ref([])
 const familyMembers = ref([])
@@ -263,10 +230,6 @@ const newFamilyName = ref('')
 // Computed para mostrar/ocultar secciones
 const showParticipantsSelection = computed(() => {
   return form.value.participants && form.value.participants !== 'Residente solo'
-})
-
-const showResidentsSelection = computed(() => {
-  return ['Con otros residentes', 'Grupo mixto'].includes(form.value.participants)
 })
 
 const showStaffSelection = computed(() => {
@@ -301,18 +264,8 @@ function onParticipantsTypeChange() {
   
   // Auto-select current resident for "Residente solo"
   if (form.value.participants === 'Residente solo') {
-    selectedParticipants.value = [{ type: 'resident', id: props.residentId, name: currentResidentName.value }]
+    selectedParticipants.value = [{ type: 'resident', id: props.residentId, name: 'Residente actual' }]
     updateParticipantsData()
-  }
-}
-
-async function loadAvailableResidents() {
-  try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/api/activities/available-residents')
-    if (!res.ok) throw new Error('No se pudieron cargar los residentes')
-    availableResidents.value = await res.json()
-  } catch (e) {
-    console.error('Error loading residents:', e)
   }
 }
 
@@ -398,24 +351,29 @@ watch(() => props.modelValue, (newValue) => {
       notes: newValue.notes || '',
       registered_by: newValue.registered_by || ''
     }
+    
+    // Load participants data if editing
+    if (newValue.participants_data) {
+      selectedParticipants.value = [...newValue.participants_data]
+      
+      // Load staff and family members from participants data
+      staffMembers.value = selectedParticipants.value
+        .filter(p => p.type === 'staff')
+        .map(p => p.name)
+      
+      familyMembers.value = selectedParticipants.value
+        .filter(p => p.type === 'family')
+        .map(p => p.name)
+    }
   }
 }, { immediate: true })
 
 // Set default scheduled_at to current date/time
-onMounted(async () => {
+onMounted(() => {
   if (!props.modelValue) {
     const now = new Date()
     now.setMinutes(now.getMinutes() - now.getMinutes() % 30) // Round to nearest 30 minutes
     form.value.scheduled_at = now.toISOString().slice(0, 16)
-  }
-  
-  // Load available residents
-  await loadAvailableResidents()
-  
-  // Get current resident name
-  const currentResident = availableResidents.value.find(r => r.id === props.residentId)
-  if (currentResident) {
-    currentResidentName.value = currentResident.name
   }
 })
 </script>
