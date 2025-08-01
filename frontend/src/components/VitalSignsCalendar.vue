@@ -136,12 +136,8 @@ const calendarDays = computed(() => {
 
   // Verificar que calendarData.value existe y tiene la estructura correcta
   if (!calendarData.value || !calendarData.value.calendar_data) {
-    console.log('calendarData.value is not ready yet:', calendarData.value)
     return days
   }
-
-  console.log('calendarData.value:', calendarData.value)
-  console.log('calendar_data:', calendarData.value.calendar_data)
 
   for (let i = 0; i < 42; i++) {
     const date = new Date(startDate)
@@ -152,9 +148,6 @@ const calendarDays = computed(() => {
     const isToday = date.getTime() === today.getTime()
     
     const vitalSigns = calendarData.value.calendar_data[dateKey] || []
-    if (vitalSigns.length > 0) {
-      console.log(`Day ${dateKey} has ${vitalSigns.length} vital signs:`, vitalSigns)
-    }
     
     days.push({
       date: dateKey,
@@ -169,20 +162,15 @@ const calendarDays = computed(() => {
 })
 
 async function fetchCalendarData() {
-  console.log('Fetching calendar data for resident:', props.residentId, 'year:', currentYear.value, 'month:', currentMonth.value)
   loading.value = true
   error.value = ''
   try {
     const res = await fetch(
       `${import.meta.env.VITE_API_URL}/api/vital-signs/calendar/${props.residentId}?year=${currentYear.value}&month=${currentMonth.value}`
     )
-    console.log('Response status:', res.status)
     if (!res.ok) throw new Error('No se pudo cargar el calendario')
-    const data = await res.json()
-    console.log('Calendar data received:', data)
-    calendarData.value = data
+    calendarData.value = await res.json()
   } catch (e) {
-    console.error('Error fetching calendar data:', e)
     error.value = e.message
   } finally {
     loading.value = false
@@ -210,11 +198,8 @@ function nextMonth() {
 }
 
 function showDayDetails(day) {
-  console.log('showDayDetails called with day:', day)
-  console.log('day.vitalSigns:', day.vitalSigns)
   selectedDay.value = day
   showModal.value = true
-  console.log('Modal should be visible now, showModal:', showModal.value)
 }
 
 function closeModal() {
