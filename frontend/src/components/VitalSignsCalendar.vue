@@ -28,6 +28,12 @@
     </div>
 
     <div v-else class="calendar-container">
+      <!-- Mensaje si no hay datos -->
+      <div v-if="Object.keys(calendarData.value.calendar_data).length === 0" class="no-data-message">
+        <p>No hay signos vitales registrados para {{ currentMonthName }} {{ currentYear }}</p>
+        <p>Usa los botones de navegación para buscar en otros meses</p>
+      </div>
+      
       <!-- Días de la semana -->
       <div class="calendar-weekdays">
         <div v-for="day in weekDays" :key="day" class="weekday">{{ day }}</div>
@@ -504,6 +510,19 @@ onMounted(fetchCalendarData)
   text-align: center;
   color: var(--color-text-light);
   padding: 2rem;
+}
+
+.no-data-message {
+  text-align: center;
+  color: var(--color-text-light);
+  padding: 2rem;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.no-data-message p {
+  margin: 0.5rem 0;
 }
 
 @media (max-width: 640px) {
