@@ -253,16 +253,13 @@ const availableSubtypes = computed(() => {
 })
 
 function onTypeChange() {
-  // Reset subtype when type changes
   form.value.subtype = ''
 }
 
 function onParticipantsTypeChange() {
-  // Reset participants when type changes
   selectedParticipants.value = []
   form.value.participants_data = []
   
-  // Auto-select current resident for "Residente solo"
   if (form.value.participants === 'Residente solo') {
     selectedParticipants.value = [{ type: 'resident', id: props.residentId, name: 'Residente actual' }]
     updateParticipantsData()
@@ -277,10 +274,10 @@ function addStaffMember() {
 }
 
 function removeStaffMember(index) {
+  const staffName = staffMembers.value[index]
   staffMembers.value.splice(index, 1)
-  // Remove from selected participants
   selectedParticipants.value = selectedParticipants.value.filter(p => 
-    !(p.type === 'staff' && p.name === staffMembers.value[index])
+    !(p.type === 'staff' && p.name === staffName)
   )
   updateParticipantsData()
 }
@@ -293,10 +290,10 @@ function addFamilyMember() {
 }
 
 function removeFamilyMember(index) {
+  const familyName = familyMembers.value[index]
   familyMembers.value.splice(index, 1)
-  // Remove from selected participants
   selectedParticipants.value = selectedParticipants.value.filter(p => 
-    !(p.type === 'family' && p.name === familyMembers.value[index])
+    !(p.type === 'family' && p.name === familyName)
   )
   updateParticipantsData()
 }
@@ -322,7 +319,6 @@ function submitForm() {
     resident_id: props.residentId
   }
   
-  // Convert datetime strings to ISO format
   if (activityData.scheduled_at) {
     activityData.scheduled_at = new Date(activityData.scheduled_at).toISOString()
   }
@@ -352,11 +348,9 @@ watch(() => props.modelValue, (newValue) => {
       registered_by: newValue.registered_by || ''
     }
     
-    // Load participants data if editing
     if (newValue.participants_data) {
       selectedParticipants.value = [...newValue.participants_data]
       
-      // Load staff and family members from participants data
       staffMembers.value = selectedParticipants.value
         .filter(p => p.type === 'staff')
         .map(p => p.name)
@@ -368,11 +362,10 @@ watch(() => props.modelValue, (newValue) => {
   }
 }, { immediate: true })
 
-// Set default scheduled_at to current date/time
 onMounted(() => {
   if (!props.modelValue) {
     const now = new Date()
-    now.setMinutes(now.getMinutes() - now.getMinutes() % 30) // Round to nearest 30 minutes
+    now.setMinutes(now.getMinutes() - now.getMinutes() % 30)
     form.value.scheduled_at = now.toISOString().slice(0, 16)
   }
 })
@@ -458,7 +451,6 @@ onMounted(() => {
 .participants-section h4 {
   margin: 0 0 1rem 0;
   color: var(--color-heading);
-  font-size: 1rem;
 }
 
 .participants-list {
@@ -467,18 +459,34 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.add-participant {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.add-participant input {
+  flex: 1;
+}
+
+.add-btn-small {
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
 .participant-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
+  background: var(--color-background);
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.participant-item:hover {
-  background: var(--color-background-mute);
 }
 
 .participant-item input[type="checkbox"] {
@@ -486,49 +494,28 @@ onMounted(() => {
   margin: 0;
 }
 
-.add-participant {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.add-participant input {
-  flex: 1;
-  margin: 0;
-}
-
-.add-btn-small {
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
 .remove-btn {
-  background: var(--color-danger);
+  background: #ff4757;
   color: white;
   border: none;
-  padding: 0.25rem 0.5rem;
   border-radius: 50%;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 12px;
   margin-left: auto;
 }
 
 .selected-participants {
   margin-top: 1rem;
   padding: 1rem;
-  background: var(--color-background-soft);
+  background: var(--color-background-mute);
   border-radius: 8px;
 }
 
 .selected-participants h4 {
   margin: 0 0 0.5rem 0;
   color: var(--color-heading);
-  font-size: 1rem;
 }
 
 .participants-summary {
@@ -541,10 +528,10 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
   background: var(--color-primary);
   color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 0.875rem;
 }
 
@@ -553,7 +540,7 @@ onMounted(() => {
   border: none;
   color: white;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 12px;
   padding: 0;
   margin-left: 0.25rem;
 }
@@ -566,10 +553,10 @@ onMounted(() => {
 }
 
 .cancel-btn {
+  padding: 0.75rem 1.5rem;
   background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-text);
-  padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
@@ -580,20 +567,20 @@ onMounted(() => {
 }
 
 .submit-btn {
+  padding: 0.75rem 1.5rem;
   background: var(--color-primary);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .submit-btn:hover {
-  background: var(--color-primary-dark);
+  opacity: 0.9;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .modal-content {
     padding: 1rem;
     width: 95%;
