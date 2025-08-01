@@ -240,21 +240,25 @@ function formatDateTime(dateTimeString) {
 }
 
 .calendar-btn {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0;
+  background: transparent !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+  font-size: 1rem !important;
+  font-weight: normal !important;
 }
 
 .calendar-btn:hover {
-  background: var(--color-background-mute);
+  background: var(--color-background-mute) !important;
+  transform: none !important;
 }
 
 .pagination {
