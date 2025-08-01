@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
 from supabase_client import supabase_client
@@ -27,7 +27,7 @@ class Activity(BaseModel):
     description: Optional[str] = None
     scheduled_at: datetime
     completed_at: Optional[datetime] = None
-    participants: str = Field(..., description="Participantes: Residente solo, Con otros residentes, Con personal, Con familiares, Grupo mixto")
+    participants: str = Field(..., description="Participantes: Residente solo, Con personal, Con familiares, Grupo mixto")
     participants_data: Optional[List[Dict[str, Any]]] = Field(default=[], description="Datos detallados de participantes")
     notes: Optional[str] = None
     registered_by: Optional[str] = None
@@ -42,6 +42,9 @@ class Activity(BaseModel):
         orm_mode = True
         validate_assignment = True
         arbitrary_types_allowed = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 @router.get("/test")
 def test_activities():
@@ -61,6 +64,28 @@ def prepare_activity_data(data: dict) -> dict:
     
     if 'completed_at' in data and data['completed_at'] and isinstance(data['completed_at'], datetime):
         data['completed_at'] = data['completed_at'].isoformat()
+    
+    # Asegurar que participants_data sea una lista válida para JSONB
+    if 'participants_data' in data:
+        if not isinstance(data['participants_data'], list):
+            data['participants_data'] = []
+        # Limpiar datos de participantes para asegurar compatibilidad JSONB
+        cleaned_participants = []
+        for participant in data['participants_data']:
+            if isinstance(participant, dict):
+                cleaned_participant = {
+                    'type': str(participant.get('type', '')),
+                    'name': str(participant.get('name', '')),
+                }
+                if participant.get('id'):
+                    cleaned_participant['id'] = str(participant['id'])
+                cleaned_participants.append(cleaned_participant)
+        data['participants_data'] = cleaned_participants
+    
+    # Limpiar campos opcionales vacíos
+    for key in ['description', 'notes', 'registered_by', 'recurrence_day', 'parent_activity_id']:
+        if key in data and (data[key] is None or data[key] == ''):
+            data[key] = None
     
     return data
 
