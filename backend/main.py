@@ -27,4 +27,6 @@ app.include_router(vital_signs.router, prefix="/api")
 
 @app.get("/ping")
 def ping():
-    return {"message": "pong", "status": "healthy"} 
+    return {"message": "pong", "status": "healthy"}
+
+# Comentario para forzar reinicio - Módulo de información médica implementado 
