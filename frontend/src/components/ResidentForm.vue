@@ -95,6 +95,43 @@
         >
       </div>
 
+      <!-- Información médica básica -->
+      <div class="form-group">
+        <label for="documentNumber">Número de Cédula</label>
+        <input 
+          id="documentNumber" 
+          v-model="formData.document_number" 
+          type="text"
+          placeholder="Ej: 1234567890"
+          maxlength="15"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="birthDate">Fecha de Nacimiento</label>
+        <input 
+          id="birthDate" 
+          v-model="formData.birth_date" 
+          type="date"
+          :max="maxDate"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="bloodType">Grupo Sanguíneo</label>
+        <select id="bloodType" v-model="formData.blood_type">
+          <option value="">Selecciona grupo sanguíneo</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+      </div>
+
       <div class="actions">
         <button type="submit">{{ isEdit ? 'Guardar cambios' : 'Agregar' }}</button>
         <button type="button" class="secondary" @click="closeForm">Cancelar</button>
@@ -104,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 
 const props = defineProps({
@@ -128,11 +165,38 @@ const formData = ref({
   emergency_contact_phone: '',
   admission_date: '',
   discharge_date: '',
+  document_number: '',
+  birth_date: '',
+  blood_type: '',
   ...props.modelValue
 })
 
 const photoPreview = ref(null)
 const photoFile = ref(null)
+
+// Calcular fecha máxima (hoy)
+const maxDate = computed(() => {
+  const today = new Date()
+  return today.toISOString().split('T')[0]
+})
+
+// Watch for modelValue changes (for editing)
+watch(() => props.modelValue, (newValue) => {
+  if (newValue) {
+    formData.value = {
+      name: newValue.name || '',
+      status: newValue.status || 'independent',
+      photo_url: newValue.photo_url || '',
+      emergency_contact_name: newValue.emergency_contact_name || '',
+      emergency_contact_phone: newValue.emergency_contact_phone || '',
+      admission_date: newValue.admission_date || '',
+      discharge_date: newValue.discharge_date || '',
+      document_number: newValue.document_number || '',
+      birth_date: newValue.birth_date || '',
+      blood_type: newValue.blood_type || ''
+    }
+  }
+}, { immediate: true })
 
 async function handlePhotoChange(event) {
   const file = event.target.files[0]
@@ -185,6 +249,9 @@ function cleanResidentData(data) {
   }
   if (cleaned.discharge_date) {
     cleaned.discharge_date = new Date(cleaned.discharge_date).toISOString().split('T')[0]
+  }
+  if (cleaned.birth_date) {
+    cleaned.birth_date = new Date(cleaned.birth_date).toISOString().split('T')[0]
   }
 
   // Limpiar campos vacíos

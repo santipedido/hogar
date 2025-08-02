@@ -60,6 +60,22 @@
         <div v-if="activeTab === 'vitals'" class="tab-panel">
           <VitalSignsList :residentId="resident.id" />
         </div>
+
+        <!-- Información Médica -->
+        <div v-if="activeTab === 'medical'" class="tab-panel">
+          <MedicalInfoView 
+            v-if="!showMedicalForm"
+            :residentId="resident.id"
+            @edit="showMedicalForm = true"
+          />
+          <MedicalInfoForm
+            v-else
+            :residentId="resident.id"
+            :isEdit="true"
+            @submit="handleMedicalSubmit"
+            @cancel="showMedicalForm = false"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -72,6 +88,8 @@ import IconUserPlaceholder from './icons/IconUserPlaceholder.vue'
 import FamilyContactList from './FamilyContactList.vue'
 import MedicationList from './MedicationList.vue'
 import VitalSignsList from './VitalSignsList.vue'
+import MedicalInfoView from './MedicalInfoView.vue'
+import MedicalInfoForm from './MedicalInfoForm.vue'
 
 const props = defineProps({
   residentId: {
@@ -86,11 +104,13 @@ const resident = ref({})
 const loading = ref(true)
 const error = ref('')
 const activeTab = ref('contacts')
+const showMedicalForm = ref(false)
 
 const tabs = [
   { id: 'contacts', name: 'Contactos Familiares' },
   { id: 'medication', name: 'Medicación' },
-  { id: 'vitals', name: 'Signos Vitales' }
+  { id: 'vitals', name: 'Signos Vitales' },
+  { id: 'medical', name: 'Información Médica' }
 ]
 
 function formatDate(dateString) {
@@ -114,6 +134,24 @@ async function loadResident() {
     error.value = e.message
   } finally {
     loading.value = false
+  }
+}
+
+async function handleMedicalSubmit(medicalData) {
+  try {
+    const res = await fetch(import.meta.env.VITE_API_URL + `/api/residents/${props.residentId}/medical-info`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(medicalData)
+    })
+    
+    if (!res.ok) throw new Error('No se pudo actualizar la información médica')
+    
+    showMedicalForm.value = false
+    // Recargar el residente para actualizar los datos
+    await loadResident()
+  } catch (e) {
+    alert(e.message)
   }
 }
 
