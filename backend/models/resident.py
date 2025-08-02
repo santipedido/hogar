@@ -12,13 +12,13 @@ class Resident(BaseModel):
     admission_date: date
     discharge_date: Optional[date] = None
     
-    # Nuevos campos de información médica
-    document_number: Optional[str] = Field(None, description="Número de cédula")
-    birth_date: Optional[date] = Field(None, description="Fecha de nacimiento")
-    pathologies: Optional[List[str]] = Field(default=[], description="Lista de patologías")
-    medical_history: Optional[str] = Field(None, description="Historial clínico básico")
-    allergies: Optional[List[str]] = Field(default=[], description="Lista de alergias")
-    blood_type: Optional[str] = Field(None, description="Grupo sanguíneo")
+    # Nuevos campos de información médica - simplificados temporalmente
+    document_number: Optional[str] = None
+    birth_date: Optional[date] = None
+    pathologies: Optional[List[str]] = None
+    medical_history: Optional[str] = None
+    allergies: Optional[List[str]] = None
+    blood_type: Optional[str] = None
 
     class Config:
         orm_mode = True
