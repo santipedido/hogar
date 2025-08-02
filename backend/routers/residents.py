@@ -8,6 +8,11 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+@router.get("/test")
+def test_residents():
+    """Endpoint de prueba para verificar que el router funciona"""
+    return {"message": "Residents router is working"}
+
 def prepare_resident_data(data: dict) -> dict:
     """Prepara los datos del residente para Supabase"""
     # Convertir fechas a string ISO
