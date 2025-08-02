@@ -59,14 +59,17 @@ async def get_resident(resident_id: str):
 async def get_resident_medical_info(resident_id: str):
     """Obtener información médica específica de un residente"""
     try:
+        logger.info(f"Fetching medical info for resident: {resident_id}")
         response = supabase_client.table('residents').select(
             "id, name, document_number, birth_date, pathologies, medical_history, allergies, blood_type"
         ).eq('id', resident_id).execute()
         
         if not response.data:
+            logger.warning(f"Resident not found: {resident_id}")
             raise HTTPException(status_code=404, detail="Residente no encontrado")
         
         resident_data = response.data[0]
+        logger.info(f"Found resident data: {resident_data}")
         
         # Calcular edad si hay fecha de nacimiento
         age = None
@@ -76,10 +79,12 @@ async def get_resident_medical_info(resident_id: str):
             today = date.today()
             age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
         
-        return {
+        result = {
             **resident_data,
             "age": age
         }
+        logger.info(f"Returning medical info: {result}")
+        return result
     except Exception as e:
         logger.error(f"Error getting medical info for resident {resident_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
