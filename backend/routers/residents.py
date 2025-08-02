@@ -80,16 +80,28 @@ async def get_resident_medical_info(resident_id: str):
         resident_data = response.data[0]
         logger.info(f"Found resident data: {resident_data}")
         
+        # Inicializar campos médicos si no existen
+        medical_data = {
+            "id": resident_data.get("id"),
+            "name": resident_data.get("name"),
+            "document_number": resident_data.get("document_number"),
+            "birth_date": resident_data.get("birth_date"),
+            "pathologies": resident_data.get("pathologies") or [],
+            "medical_history": resident_data.get("medical_history"),
+            "allergies": resident_data.get("allergies") or [],
+            "blood_type": resident_data.get("blood_type")
+        }
+        
         # Calcular edad si hay fecha de nacimiento
         age = None
-        if resident_data.get('birth_date'):
+        if medical_data.get('birth_date'):
             from datetime import date
-            birth_date = date.fromisoformat(resident_data['birth_date'])
+            birth_date = date.fromisoformat(medical_data['birth_date'])
             today = date.today()
             age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
         
         result = {
-            **resident_data,
+            **medical_data,
             "age": age
         }
         logger.info(f"Returning medical info: {result}")
