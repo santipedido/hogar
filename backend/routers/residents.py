@@ -44,17 +44,6 @@ async def get_residents():
         logger.error(f"Error getting residents: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/residents/{resident_id}", response_model=Resident)
-async def get_resident(resident_id: str):
-    try:
-        response = supabase_client.table('residents').select("*").eq('id', resident_id).execute()
-        if not response.data:
-            raise HTTPException(status_code=404, detail="Residente no encontrado")
-        return response.data[0]
-    except Exception as e:
-        logger.error(f"Error getting resident {resident_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/residents/{resident_id}/medical-info")
 async def get_resident_medical_info(resident_id: str):
     """Obtener información médica específica de un residente"""
@@ -87,6 +76,17 @@ async def get_resident_medical_info(resident_id: str):
         return result
     except Exception as e:
         logger.error(f"Error getting medical info for resident {resident_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/residents/{resident_id}", response_model=Resident)
+async def get_resident(resident_id: str):
+    try:
+        response = supabase_client.table('residents').select("*").eq('id', resident_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Residente no encontrado")
+        return response.data[0]
+    except Exception as e:
+        logger.error(f"Error getting resident {resident_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/residents/", response_model=Resident)
