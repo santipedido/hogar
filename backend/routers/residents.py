@@ -8,6 +8,11 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+@router.get("/health")
+def health_check():
+    """Endpoint de salud para verificar que el router funciona"""
+    return {"status": "healthy", "router": "residents", "message": "Residents router is working"}
+
 @router.get("/test")
 def test_residents():
     """Endpoint de prueba para verificar que el router funciona"""
